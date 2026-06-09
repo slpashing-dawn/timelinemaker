@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>ChronoForge · 타임라인 스튜디오 (내용 배경 커스텀 추가)</title>
+    <title>ChronoForge · 타임라인 스튜디오 </title>
     <style>
         * {
             margin: 0;
@@ -287,6 +287,10 @@
             gap: 12px;
             justify-content: flex-end;
         }
+        .simple-event {
+            opacity: 0.9;
+            font-style: italic;
+        }
     </style>
 </head>
 <body>
@@ -386,7 +390,7 @@
         text: "#cfd7df",
         accent: "#7cc7ff",
         cardBg: "#13171d",
-        eventBg: "#13171d",   // 새로 추가: 사건 내용 배경
+        eventBg: "#13171d",
         border: "#26313d"
     };
     let currentTheme = "dcdata";
@@ -403,19 +407,19 @@
 
     const defaultData = () => [
         { id: genId(), year: "2010", open: true, events: [
-            { id: genId(), title: "첫 조우", content: "딕 그레이슨과 에이든, 어둠의 골목에서 운명처럼 만나다.", open: true },
-            { id: genId(), title: "타이탄즈 합류", content: "영웅으로서의 첫 발걸음, 팀과의 인연이 시작되다.", open: false }
+            { id: genId(), title: "첫 조우", content: "딕 그레이슨과 에이든, 어둠의 골목에서 운명처럼 만나다.", open: true, hasDetail: true },
+            { id: genId(), title: "타이탄즈 합류", content: "영웅으로서의 첫 발걸음, 팀과의 인연이 시작되다.", open: false, hasDetail: true }
         ] },
         { id: genId(), year: "2015", open: true, events: [
-            { id: genId(), title: "블뤼드헤이븐 이주", content: "독립적인 활동을 위한 거처, 그림자와 함께.", open: false },
-            { id: genId(), title: "붉은 두건 사건", content: "제이슨 토드의 귀환, 과거와의 화해.", open: false }
+            { id: genId(), title: "블뤼드헤이븐 이주", content: "독립적인 활동을 위한 거처, 그림자와 함께.", open: false, hasDetail: true },
+            { id: genId(), title: "붉은 두건 사건", content: "제이슨 토드의 귀환, 과거와의 화해.", open: false, hasDetail: true }
         ] },
         { id: genId(), year: "2020", open: false, events: [
-            { id: genId(), title: "화해와 이해", content: "진정한 파트너로 거듭나다.", open: false }
+            { id: genId(), title: "화해와 이해 (간단)", content: "", open: false, hasDetail: false }
         ] }
     ];
 
-    // 테마별 기본 색상 (eventBg 포함)
+    // 테마별 기본 색상
     function getDefaultColors(theme) {
         switch(theme) {
             case "dcdata": return { bg:"#0d0f12", text:"#cfd7df", accent:"#7cc7ff", cardBg:"#13171d", eventBg:"#13171d", border:"#26313d" };
@@ -491,7 +495,7 @@
             try {
                 const s = JSON.parse(settingsRaw);
                 if(s.timelineTitle) timelineTitle = s.timelineTitle;
-                if(s.customColors) customColors = { ...getDefaultColors(currentTheme), ...s.customColors }; // merge to ensure eventBg exists
+                if(s.customColors) customColors = { ...getDefaultColors(currentTheme), ...s.customColors };
                 if(s.currentTheme) currentTheme = s.currentTheme;
                 if(s.darkModePreview !== undefined) darkModePreview = s.darkModePreview;
                 if(s.fontSettings) fontSettings = s.fontSettings;
@@ -506,10 +510,16 @@
                 syncFontUI();
             } catch(e) {}
         }
+        // migrate old events: add hasDetail if missing
+        for (let era of timelineData) {
+            for (let ev of era.events) {
+                if (ev.hasDetail === undefined) ev.hasDetail = true;
+            }
+        }
         if(!timelineData.length) timelineData = defaultData();
     }
 
-    // HTML 파싱 (동일)
+    // HTML 파싱
     function parseHtmlToTimeline(htmlString) {
         const parser = new DOMParser();
         const doc = parser.parseFromString(htmlString, 'text/html');
@@ -531,15 +541,18 @@
             for (let evEl of eventEls) {
                 let title = "", content = "";
                 const evSummary = evEl.querySelector('summary');
+                let hasDetail = true;
                 if (evSummary) {
                     title = evSummary.innerText.trim();
                     let contentDiv = evEl.querySelector('.event-content, .event-detail');
                     if (contentDiv) content = contentDiv.innerText.trim();
+                    else hasDetail = false; // 만약 details 내부에 내용 div가 없으면 간단 사건으로 간주
                 } else {
                     title = evEl.innerText.slice(0, 100).trim();
+                    hasDetail = false;
                 }
                 const evOpen = evEl.hasAttribute('open');
-                events.push({ id: genId(), title: title || "제목 없음", content: content || "", open: evOpen });
+                events.push({ id: genId(), title: title || "제목 없음", content: content || "", open: evOpen, hasDetail: hasDetail });
             }
             if (yearText) newTimeline.push({ id: genId(), year: yearText, open: open, events: events });
         }
@@ -582,7 +595,7 @@
         };
     }
 
-    // ------------------ 편집기 렌더링 (기존과 동일) ------------------
+    // ------------------ 편집기 렌더링 (hasDetail 토글 버튼 추가) ------------------
     function renderEditor() {
         const container = document.getElementById("erasContainer");
         if(!container) return;
@@ -654,11 +667,34 @@
                     titleInput.className = "event-title-input";
                     titleInput.addEventListener("change", (e) => { ev.title = e.target.value; syncAll(); });
                     
-                    const contentInput = document.createElement("input");
-                    contentInput.value = ev.content;
-                    contentInput.className = "event-content-input";
-                    contentInput.placeholder = "사건 내용";
-                    contentInput.addEventListener("change", (e) => { ev.content = e.target.value; syncAll(); });
+                    // content input (hasDetail이 true일 때만 표시)
+                    let contentInput = null;
+                    if (ev.hasDetail !== false) {
+                        contentInput = document.createElement("input");
+                        contentInput.type = "text";
+                        contentInput.value = ev.content;
+                        contentInput.className = "event-content-input";
+                        contentInput.placeholder = "사건 내용";
+                        contentInput.addEventListener("change", (e) => { ev.content = e.target.value; syncAll(); });
+                    } else {
+                        // 간단 모드일 때는 내용 입력 필드 없음 대신 텍스트 표시
+                        const simpleHint = document.createElement("span");
+                        simpleHint.textContent = "📌 간단 사건 (세부 내용 없음)";
+                        simpleHint.style.fontSize = "12px";
+                        simpleHint.style.color = "#8b9abb";
+                        simpleHint.style.marginLeft = "8px";
+                        eventDiv.appendChild(simpleHint);
+                    }
+                    
+                    const toggleDetailBtn = document.createElement("button");
+                    toggleDetailBtn.textContent = ev.hasDetail ? "📄 상세" : "📝 간단";
+                    toggleDetailBtn.className = "small-btn";
+                    toggleDetailBtn.title = "세부 내용 표시 전환";
+                    toggleDetailBtn.onclick = () => {
+                        ev.hasDetail = !ev.hasDetail;
+                        if (ev.hasDetail && !ev.content) ev.content = "내용을 입력하세요";
+                        syncAll();
+                    };
                     
                     const toggleEventBtn = document.createElement("button");
                     toggleEventBtn.textContent = ev.open ? "▼" : "▶";
@@ -671,7 +707,8 @@
                     
                     eventDiv.appendChild(dragEventHandle);
                     eventDiv.appendChild(titleInput);
-                    eventDiv.appendChild(contentInput);
+                    if (contentInput) eventDiv.appendChild(contentInput);
+                    eventDiv.appendChild(toggleDetailBtn);
                     eventDiv.appendChild(toggleEventBtn);
                     eventDiv.appendChild(delEventBtn);
                     eventListDiv.appendChild(eventDiv);
@@ -680,7 +717,7 @@
                 addEventButton.textContent = "+ 새 사건 추가";
                 addEventButton.className = "add-event-btn";
                 addEventButton.onclick = () => {
-                    era.events.push({ id: genId(), title: "새로운 기록", content: "내용을 입력하세요", open: true });
+                    era.events.push({ id: genId(), title: "새로운 기록", content: "내용을 입력하세요", open: true, hasDetail: true });
                     syncAll();
                 };
                 eventListDiv.appendChild(addEventButton);
@@ -693,6 +730,7 @@
             }
             container.appendChild(eraCard);
         });
+        // 드래그 드롭 이벤트 (생략, 기존과 동일)
         container.addEventListener("dragover", (e) => e.preventDefault());
         container.addEventListener("drop", (e) => {
             e.preventDefault();
@@ -739,7 +777,7 @@
         syncAll();
     }
 
-    // ------------------ 미리보기 (eventBg 사용) ------------------
+    // ------------------ 미리보기 (간단 사건 처리) ------------------
     function renderPreview() {
         const previewDiv = document.getElementById("previewArea");
         if(!previewDiv) return;
@@ -753,15 +791,15 @@
         const fontDeclare = getFontCSS();
         let css = "";
         if(currentTheme === "dcdata") {
-            css = `.preview-timeline{max-width:900px;margin:20px auto;background:${bg};padding:20px;border:1px solid ${border};color:${text};border-radius:16px; ${fontDeclare} }.preview-timeline .bat-header::before{content:"${titleEscaped}";display:block;margin-bottom:20px;font-weight:bold;}.preview-timeline .tl-year{border-left:2px solid ${border};padding-left:18px;margin-bottom:12px;}.preview-timeline .tl-year>summary{font-size:18px;font-weight:700;color:${accent};cursor:pointer;}.preview-timeline .tl-event{margin-left:15px;}.preview-timeline .event-detail{background:${eventBg};border-left:2px solid ${accent};padding:10px;margin:6px 0 12px 20px;color:${text};}`;
+            css = `.preview-timeline{max-width:900px;margin:20px auto;background:${bg};padding:20px;border:1px solid ${border};color:${text};border-radius:16px; ${fontDeclare} }.preview-timeline .bat-header::before{content:"${titleEscaped}";display:block;margin-bottom:20px;font-weight:bold;}.preview-timeline .tl-year{border-left:2px solid ${border};padding-left:18px;margin-bottom:12px;}.preview-timeline .tl-year>summary{font-size:18px;font-weight:700;color:${accent};cursor:pointer;}.preview-timeline .tl-event{margin-left:15px;}.preview-timeline .event-detail{background:${eventBg};border-left:2px solid ${accent};padding:10px;margin:6px 0 12px 20px;color:${text};}.preview-timeline .simple-event{margin-left:20px;padding:4px 0;color:${text};opacity:0.9;list-style-type:circle;}`;
         } else if(currentTheme === "minimal") {
-            css = `.preview-timeline{max-width:860px;margin:20px auto;background:${bg};color:${text};padding:20px;border-radius:24px; ${fontDeclare} }.preview-timeline .bat-header::before{content:"${titleEscaped}";font-size:1.8rem;font-weight:300;display:block;margin-bottom:20px;}.preview-timeline .tl-year{border-bottom:1px solid ${border};margin-bottom:20px;}.preview-timeline .tl-year>summary{font-size:1.6rem;font-weight:500;color:${accent};cursor:pointer;}.preview-timeline .tl-event{margin-left:24px;}.preview-timeline .event-detail{background:${eventBg};padding:10px;border-radius:16px;margin-top:8px;color:${text};}`;
+            css = `.preview-timeline{max-width:860px;margin:20px auto;background:${bg};color:${text};padding:20px;border-radius:24px; ${fontDeclare} }.preview-timeline .bat-header::before{content:"${titleEscaped}";font-size:1.8rem;font-weight:300;display:block;margin-bottom:20px;}.preview-timeline .tl-year{border-bottom:1px solid ${border};margin-bottom:20px;}.preview-timeline .tl-year>summary{font-size:1.6rem;font-weight:500;color:${accent};cursor:pointer;}.preview-timeline .tl-event{margin-left:24px;}.preview-timeline .event-detail{background:${eventBg};padding:10px;border-radius:16px;margin-top:8px;color:${text};}.preview-timeline .simple-event{margin-left:24px;padding:4px 0;color:${text};}`;
         } else if(currentTheme === "cute") {
-            css = `.preview-timeline{max-width:900px;margin:30px auto;font-family:'Comic Neue', 'Segoe UI Emoji', cursive;background:${bg};border-radius:48px;padding:28px 24px;border:1px solid ${border}; ${fontDeclare} }.preview-timeline .bat-header::before{content:"${titleEscaped}";font-size:22px;display:block;text-align:center;margin-bottom:20px;color:${accent};}.preview-timeline .tl-year{background:${cardBg};border-radius:60px;margin-bottom:24px;padding:8px 20px;border:1px solid ${border};}.preview-timeline .tl-year>summary{font-size:22px;font-weight:bold;color:${accent};cursor:pointer;list-style:none;display:flex;align-items:center;gap:6px;}.preview-timeline .tl-year>summary::-webkit-details-marker{display:none;}.preview-timeline .tl-year>summary::before{content:"🌸 ";}.preview-timeline .tl-year[open]>summary::before{content:"🎀 ";}.preview-timeline .tl-event{background:${cardBg};border-radius:40px;margin:12px 0 12px 20px;padding:6px 12px;}.preview-timeline .tl-event>summary{font-weight:600;color:${accent};cursor:pointer;list-style:none;padding:6px;}.preview-timeline .tl-event>summary::before{content:"✨ ";}.preview-timeline .event-detail{background:${eventBg};border-radius:28px;padding:12px 18px;margin:8px 8px 8px 28px;color:${text};border-left:6px solid ${accent};}`;
+            css = `.preview-timeline{max-width:900px;margin:30px auto;font-family:'Comic Neue', 'Segoe UI Emoji', cursive;background:${bg};border-radius:48px;padding:28px 24px;border:1px solid ${border}; ${fontDeclare} }.preview-timeline .bat-header::before{content:"${titleEscaped}";font-size:22px;display:block;text-align:center;margin-bottom:20px;color:${accent};}.preview-timeline .tl-year{background:${cardBg};border-radius:60px;margin-bottom:24px;padding:8px 20px;border:1px solid ${border};}.preview-timeline .tl-year>summary{font-size:22px;font-weight:bold;color:${accent};cursor:pointer;list-style:none;display:flex;align-items:center;gap:6px;}.preview-timeline .tl-year>summary::-webkit-details-marker{display:none;}.preview-timeline .tl-year>summary::before{content:"🌸 ";}.preview-timeline .tl-year[open]>summary::before{content:"🎀 ";}.preview-timeline .tl-event{background:${cardBg};border-radius:40px;margin:12px 0 12px 20px;padding:6px 12px;}.preview-timeline .tl-event>summary{font-weight:600;color:${accent};cursor:pointer;list-style:none;padding:6px;}.preview-timeline .tl-event>summary::before{content:"✨ ";}.preview-timeline .event-detail{background:${eventBg};border-radius:28px;padding:12px 18px;margin:8px 8px 8px 28px;color:${text};border-left:6px solid ${accent};}.preview-timeline .simple-event{margin-left:28px;padding:6px 0;color:${text};}`;
         } else if(currentTheme === "gothic") {
-            css = `.preview-timeline{max-width:960px;margin:40px auto;background:${bg};padding:32px 28px;border:2px solid ${border};border-radius:24px;font-family:'Georgia', 'Times New Roman', serif;color:${text}; ${fontDeclare} }.preview-timeline .bat-header{text-align:center;margin-bottom:28px;font-size:22px;letter-spacing:4px;color:${accent};border-bottom:1px dashed ${border};padding-bottom:12px;}.preview-timeline .bat-header::before{content:"${titleEscaped}";}.preview-timeline .tl-year{background:${cardBg};border-radius:18px;margin-bottom:28px;border-left:8px solid ${accent};padding:10px 22px;}.preview-timeline .tl-year>summary{font-size:26px;font-weight:bold;color:${accent};cursor:pointer;list-style:none;display:flex;align-items:center;gap:12px;}.preview-timeline .tl-year>summary::-webkit-details-marker{display:none;}.preview-timeline .tl-year>summary::before{content:"🜟  ";}.preview-timeline .tl-year[open]>summary::before{content:"🜞  ";}.preview-timeline .tl-event{background:${cardBg};margin:16px 0 16px 24px;border-radius:30px;padding:2px 14px;border:1px solid ${border};}.preview-timeline .tl-event>summary{font-size:18px;font-weight:600;color:${accent};cursor:pointer;padding:10px 0;list-style:none;}.preview-timeline .tl-event>summary::before{content:"⚜️ ";}.preview-timeline .event-detail{background:${eventBg};border-radius:24px;padding:14px 22px;margin:4px 8px 14px 28px;color:${text};border-left:4px solid ${accent};}`;
+            css = `.preview-timeline{max-width:960px;margin:40px auto;background:${bg};padding:32px 28px;border:2px solid ${border};border-radius:24px;font-family:'Georgia', 'Times New Roman', serif;color:${text}; ${fontDeclare} }.preview-timeline .bat-header{text-align:center;margin-bottom:28px;font-size:22px;letter-spacing:4px;color:${accent};border-bottom:1px dashed ${border};padding-bottom:12px;}.preview-timeline .bat-header::before{content:"${titleEscaped}";}.preview-timeline .tl-year{background:${cardBg};border-radius:18px;margin-bottom:28px;border-left:8px solid ${accent};padding:10px 22px;}.preview-timeline .tl-year>summary{font-size:26px;font-weight:bold;color:${accent};cursor:pointer;list-style:none;display:flex;align-items:center;gap:12px;}.preview-timeline .tl-year>summary::-webkit-details-marker{display:none;}.preview-timeline .tl-year>summary::before{content:"🜟  ";}.preview-timeline .tl-year[open]>summary::before{content:"🜞  ";}.preview-timeline .tl-event{background:${cardBg};margin:16px 0 16px 24px;border-radius:30px;padding:2px 14px;border:1px solid ${border};}.preview-timeline .tl-event>summary{font-size:18px;font-weight:600;color:${accent};cursor:pointer;padding:10px 0;list-style:none;}.preview-timeline .tl-event>summary::before{content:"⚜️ ";}.preview-timeline .event-detail{background:${eventBg};border-radius:24px;padding:14px 22px;margin:4px 8px 14px 28px;color:${text};border-left:4px solid ${accent};}.preview-timeline .simple-event{margin-left:28px;padding:8px 0;color:${text};font-style:italic;}`;
         } else if(currentTheme === "ffxiv") {
-            css = `.preview-timeline{max-width:1000px;margin:30px auto;background:${bg};padding:28px 32px;border:2px solid ${accent};border-radius:24px;box-shadow:0 8px 20px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.05);font-family:'Palatino', 'Georgia', 'Times New Roman', serif;color:${text}; ${fontDeclare} }.preview-timeline .bat-header{text-align:center;margin-bottom:32px;font-size:26px;font-weight:bold;text-transform:uppercase;letter-spacing:3px;color:${accent};text-shadow:0 1px 2px black;border-bottom:2px solid ${accent};display:inline-block;width:auto;padding-bottom:8px;}.preview-timeline .bat-header::before{content:"✨ ${titleEscaped} ✨";}.preview-timeline .tl-year{background:${cardBg};border-left:6px solid ${accent};margin-bottom:24px;border-radius:16px;padding:10px 20px;transition:0.1s;}.preview-timeline .tl-year>summary{font-size:24px;font-weight:bold;color:${accent};cursor:pointer;list-style:none;display:flex;align-items:center;gap:12px;}.preview-timeline .tl-year>summary::-webkit-details-marker{display:none;}.preview-timeline .tl-year>summary::before{content:"📜 ";}.preview-timeline .tl-year[open]>summary::before{content:"📖 ";}.preview-timeline .tl-event{background:rgba(0,0,0,0.25);margin:12px 0 12px 28px;border-radius:12px;padding:4px 16px;border-left:3px solid ${accent};backdrop-filter:blur(2px);}.preview-timeline .tl-event>summary{font-size:18px;font-weight:600;color:${accent};cursor:pointer;padding:8px 0;list-style:none;}.preview-timeline .tl-event>summary::-webkit-details-marker{display:none;}.preview-timeline .tl-event>summary::before{content:"⚔️ ";}.preview-timeline .tl-event[open]>summary::before{content:"🏆 ";}.preview-timeline .event-detail{background:${eventBg};border-radius:14px;padding:12px 20px;margin:6px 0 12px 28px;color:${text};border-left:2px solid ${accent};font-size:14px;line-height:1.5;box-shadow:inset 0 0 8px rgba(0,0,0,0.2);}`;
+            css = `.preview-timeline{max-width:1000px;margin:30px auto;background:${bg};padding:28px 32px;border:2px solid ${accent};border-radius:24px;box-shadow:0 8px 20px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.05);font-family:'Palatino', 'Georgia', 'Times New Roman', serif;color:${text}; ${fontDeclare} }.preview-timeline .bat-header{text-align:center;margin-bottom:32px;font-size:26px;font-weight:bold;text-transform:uppercase;letter-spacing:3px;color:${accent};text-shadow:0 1px 2px black;border-bottom:2px solid ${accent};display:inline-block;width:auto;padding-bottom:8px;}.preview-timeline .bat-header::before{content:"✨ ${titleEscaped} ✨";}.preview-timeline .tl-year{background:${cardBg};border-left:6px solid ${accent};margin-bottom:24px;border-radius:16px;padding:10px 20px;transition:0.1s;}.preview-timeline .tl-year>summary{font-size:24px;font-weight:bold;color:${accent};cursor:pointer;list-style:none;display:flex;align-items:center;gap:12px;}.preview-timeline .tl-year>summary::-webkit-details-marker{display:none;}.preview-timeline .tl-year>summary::before{content:"📜 ";}.preview-timeline .tl-year[open]>summary::before{content:"📖 ";}.preview-timeline .tl-event{background:rgba(0,0,0,0.25);margin:12px 0 12px 28px;border-radius:12px;padding:4px 16px;border-left:3px solid ${accent};backdrop-filter:blur(2px);}.preview-timeline .tl-event>summary{font-size:18px;font-weight:600;color:${accent};cursor:pointer;padding:8px 0;list-style:none;}.preview-timeline .tl-event>summary::-webkit-details-marker{display:none;}.preview-timeline .tl-event>summary::before{content:"⚔️ ";}.preview-timeline .tl-event[open]>summary::before{content:"🏆 ";}.preview-timeline .event-detail{background:${eventBg};border-radius:14px;padding:12px 20px;margin:6px 0 12px 28px;color:${text};border-left:2px solid ${accent};font-size:14px;line-height:1.5;box-shadow:inset 0 0 8px rgba(0,0,0,0.2);}.preview-timeline .simple-event{margin-left:32px;padding:6px 0;color:${accent};font-style:italic;}`;
         }
         if(darkModePreview && !["dcdata","gothic","ffxiv"].includes(currentTheme)) {
             css = css.replace(/background:${bg}/g, "background:#121212").replace(/color:${text}/g, "color:#e0e0e0");
@@ -772,9 +810,14 @@
         timelineData.forEach(era => {
             html += `<details class="tl-year" ${era.open ? "open" : ""}><summary>${escapeHtml(era.year)}</summary>`;
             era.events.forEach(ev => {
-                html += `<details class="tl-event" ${ev.open ? "open" : ""}><summary><span class="event-title">${escapeHtml(ev.title)}</span></summary>`;
-                html += `<div class="event-detail">${escapeHtml(ev.content).replace(/\n/g,'<br>')}</div>`;
-                html += `</details>`;
+                if (ev.hasDetail === false) {
+                    // 간단 사건: details 없이 제목만 표시
+                    html += `<div class="simple-event">• ${escapeHtml(ev.title)}</div>`;
+                } else {
+                    html += `<details class="tl-event" ${ev.open ? "open" : ""}><summary><span class="event-title">${escapeHtml(ev.title)}</span></summary>`;
+                    html += `<div class="event-detail">${escapeHtml(ev.content).replace(/\n/g,'<br>')}</div>`;
+                    html += `</details>`;
+                }
             });
             html += `</details>`;
         });
@@ -805,7 +848,7 @@
 
     function syncAll() { saveAll(); renderEditor(); renderPreview(); }
 
-    // 내보내기 (eventBg 포함)
+    // 내보내기 (간단 사건 처리)
     function exportHtml() {
         const dataCopy = JSON.parse(JSON.stringify(timelineData));
         const title = timelineTitle;
@@ -819,7 +862,11 @@
         dataCopy.forEach(era => {
             timelineHtml += `<details class="year-item" ${era.open ? "open" : ""}><summary>${escapeHtml(era.year)}</summary>`;
             era.events.forEach(ev => {
-                timelineHtml += `<details class="event-item" ${ev.open ? "open" : ""}><summary>${escapeHtml(ev.title)}</summary><div class="event-content">${escapeHtml(ev.content)}</div></details>`;
+                if (ev.hasDetail === false) {
+                    timelineHtml += `<div class="simple-event-item">• ${escapeHtml(ev.title)}</div>`;
+                } else {
+                    timelineHtml += `<details class="event-item" ${ev.open ? "open" : ""}><summary>${escapeHtml(ev.title)}</summary><div class="event-content">${escapeHtml(ev.content)}</div></details>`;
+                }
             });
             timelineHtml += `</details>`;
         });
@@ -831,15 +878,15 @@
         const { bg, text, accent, cardBg, eventBg, border } = colors;
         let base = fontRule ? fontRule + "\n" : "";
         if(theme === "cute") {
-            base += `.timeline-root{max-width:900px;margin:30px auto;font-family:'Comic Neue', cursive;background:${bg};border-radius:48px;padding:28px;border:1px solid ${border}; ${fontDeclare} }.timeline-root::before{content:"${escapeHtml(title)}";display:block;text-align:center;font-size:22px;margin-bottom:20px;color:${accent};}.year-item{background:${cardBg};border-radius:60px;margin-bottom:24px;padding:8px 20px;border:1px solid ${border};}.year-item>summary{font-size:22px;font-weight:bold;color:${accent};cursor:pointer;}.year-item>summary::before{content:"🌸 ";}.event-item{margin-left:20px;background:${cardBg};border-radius:40px;padding:6px 12px;}.event-item>summary{color:${accent};}.event-content{background:${eventBg};border-radius:28px;padding:12px;margin:8px 0 8px 28px;border-left:6px solid ${accent};color:${text};}`;
+            base += `.timeline-root{max-width:900px;margin:30px auto;font-family:'Comic Neue', cursive;background:${bg};border-radius:48px;padding:28px;border:1px solid ${border}; ${fontDeclare} }.timeline-root::before{content:"${escapeHtml(title)}";display:block;text-align:center;font-size:22px;margin-bottom:20px;color:${accent};}.year-item{background:${cardBg};border-radius:60px;margin-bottom:24px;padding:8px 20px;border:1px solid ${border};}.year-item>summary{font-size:22px;font-weight:bold;color:${accent};cursor:pointer;}.year-item>summary::before{content:"🌸 ";}.event-item{margin-left:20px;background:${cardBg};border-radius:40px;padding:6px 12px;}.event-item>summary{color:${accent};}.event-content{background:${eventBg};border-radius:28px;padding:12px;margin:8px 0 8px 28px;border-left:6px solid ${accent};color:${text};}.simple-event-item{margin-left:28px;padding:6px 0;color:${text};}`;
         } else if(theme === "gothic") {
-            base += `.timeline-root{max-width:960px;margin:40px auto;background:${bg};padding:32px;border:2px solid ${border};border-radius:24px;font-family:Georgia, serif;color:${text}; ${fontDeclare} }.timeline-root::before{content:"${escapeHtml(title)}";display:block;text-align:center;font-size:22px;margin-bottom:28px;color:${accent};border-bottom:1px dashed ${border};padding-bottom:12px;}.year-item{background:${cardBg};border-radius:18px;margin-bottom:28px;border-left:8px solid ${accent};padding:10px 22px;}.year-item>summary{font-size:26px;font-weight:bold;color:${accent};}.year-item>summary::before{content:"🜟 ";}.event-item{margin-left:24px;background:${cardBg};border-radius:30px;padding:2px 14px;border:1px solid ${border};}.event-item>summary{font-size:18px;color:${accent};}.event-item>summary::before{content:"⚜️ ";}.event-content{background:${eventBg};border-radius:24px;padding:14px;margin:4px 8px 14px 28px;border-left:4px solid ${accent};color:${text};}`;
+            base += `.timeline-root{max-width:960px;margin:40px auto;background:${bg};padding:32px;border:2px solid ${border};border-radius:24px;font-family:Georgia, serif;color:${text}; ${fontDeclare} }.timeline-root::before{content:"${escapeHtml(title)}";display:block;text-align:center;font-size:22px;margin-bottom:28px;color:${accent};border-bottom:1px dashed ${border};padding-bottom:12px;}.year-item{background:${cardBg};border-radius:18px;margin-bottom:28px;border-left:8px solid ${accent};padding:10px 22px;}.year-item>summary{font-size:26px;font-weight:bold;color:${accent};}.year-item>summary::before{content:"🜟 ";}.event-item{margin-left:24px;background:${cardBg};border-radius:30px;padding:2px 14px;border:1px solid ${border};}.event-item>summary{font-size:18px;color:${accent};}.event-item>summary::before{content:"⚜️ ";}.event-content{background:${eventBg};border-radius:24px;padding:14px;margin:4px 8px 14px 28px;border-left:4px solid ${accent};color:${text};}.simple-event-item{margin-left:28px;padding:8px 0;color:${text};}`;
         } else if(theme === "dcdata") {
-            base += `.timeline-root{background:${bg};color:${text};padding:20px; ${fontDeclare} }.timeline-root::before{content:"${escapeHtml(title)}";display:block;margin-bottom:20px;font-weight:bold;}.year-item{border-left:2px solid ${border};padding-left:18px;}.year-item>summary{color:${accent};}.event-content{background:${eventBg};border-left:2px solid ${accent};padding:10px;margin-left:20px;}`;
+            base += `.timeline-root{background:${bg};color:${text};padding:20px; ${fontDeclare} }.timeline-root::before{content:"${escapeHtml(title)}";display:block;margin-bottom:20px;font-weight:bold;}.year-item{border-left:2px solid ${border};padding-left:18px;}.year-item>summary{color:${accent};}.event-content{background:${eventBg};border-left:2px solid ${accent};padding:10px;margin-left:20px;}.simple-event-item{margin-left:20px;padding:4px 0;}`;
         } else if(theme === "ffxiv") {
-            base += `.timeline-root{max-width:1000px;margin:30px auto;background:${bg};padding:28px 32px;border:2px solid ${accent};border-radius:24px;font-family:'Palatino','Georgia',serif;color:${text}; ${fontDeclare} }.timeline-root::before{content:"✨ ${escapeHtml(title)} ✨";display:block;text-align:center;font-size:26px;font-weight:bold;margin-bottom:28px;color:${accent};border-bottom:2px solid ${accent};padding-bottom:8px;}.year-item{background:${cardBg};border-left:6px solid ${accent};margin-bottom:24px;border-radius:16px;padding:10px 20px;}.year-item>summary{font-size:24px;font-weight:bold;color:${accent};cursor:pointer;}.year-item>summary::before{content:"📜 ";}.year-item[open]>summary::before{content:"📖 ";}.event-item{background:rgba(0,0,0,0.25);margin:12px 0 12px 28px;border-radius:12px;padding:4px 16px;border-left:3px solid ${accent};}.event-item>summary{font-size:18px;font-weight:600;color:${accent};cursor:pointer;padding:8px 0;}.event-item>summary::before{content:"⚔️ ";}.event-item[open]>summary::before{content:"🏆 ";}.event-content{background:${eventBg};border-radius:14px;padding:12px 20px;margin:6px 0 12px 28px;color:${text};border-left:2px solid ${accent};}`;
+            base += `.timeline-root{max-width:1000px;margin:30px auto;background:${bg};padding:28px 32px;border:2px solid ${accent};border-radius:24px;font-family:'Palatino','Georgia',serif;color:${text}; ${fontDeclare} }.timeline-root::before{content:"✨ ${escapeHtml(title)} ✨";display:block;text-align:center;font-size:26px;font-weight:bold;margin-bottom:28px;color:${accent};border-bottom:2px solid ${accent};padding-bottom:8px;}.year-item{background:${cardBg};border-left:6px solid ${accent};margin-bottom:24px;border-radius:16px;padding:10px 20px;}.year-item>summary{font-size:24px;font-weight:bold;color:${accent};cursor:pointer;}.year-item>summary::before{content:"📜 ";}.year-item[open]>summary::before{content:"📖 ";}.event-item{background:rgba(0,0,0,0.25);margin:12px 0 12px 28px;border-radius:12px;padding:4px 16px;border-left:3px solid ${accent};}.event-item>summary{font-size:18px;font-weight:600;color:${accent};cursor:pointer;padding:8px 0;}.event-item>summary::before{content:"⚔️ ";}.event-item[open]>summary::before{content:"🏆 ";}.event-content{background:${eventBg};border-radius:14px;padding:12px 20px;margin:6px 0 12px 28px;color:${text};border-left:2px solid ${accent};}.simple-event-item{margin-left:32px;padding:6px 0;color:${accent};font-style:italic;}`;
         } else { // minimal
-            base += `.timeline-root{font-family:sans-serif;background:${bg};color:${text};padding:20px; ${fontDeclare} }.timeline-root::before{content:"${escapeHtml(title)}";font-size:1.5rem;display:block;margin-bottom:20px;}.year-item>summary{font-size:1.5rem;color:${accent};}.event-content{background:${eventBg};padding:8px;border-radius:16px;margin-left:24px;}`;
+            base += `.timeline-root{font-family:sans-serif;background:${bg};color:${text};padding:20px; ${fontDeclare} }.timeline-root::before{content:"${escapeHtml(title)}";font-size:1.5rem;display:block;margin-bottom:20px;}.year-item>summary{font-size:1.5rem;color:${accent};}.event-content{background:${eventBg};padding:8px;border-radius:16px;margin-left:24px;}.simple-event-item{margin-left:24px;padding:4px 0;}`;
         }
         return base;
     }
