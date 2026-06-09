@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>타임라인 빌더 · 시각적 편집기</title>
+    <title>ChronoForge · 타임라인 스튜디오 (폰트 커스텀 포함)</title>
     <style>
         * {
             margin: 0;
@@ -13,659 +13,784 @@
 
         body {
             background: #eef2f5;
-            font-family: 'Segoe UI', 'Noto Sans KR', system-ui, sans-serif;
-            padding: 2rem 1.5rem;
-            color: #1a2c3e;
+            font-family: system-ui, -apple-system, 'Segoe UI', 'Inter', 'Roboto', sans-serif;
+            padding: 20px;
         }
 
-        .builder-container {
-            max-width: 1400px;
+        .app-container {
+            max-width: 1600px;
             margin: 0 auto;
+            background: #fff;
+            border-radius: 32px;
+            box-shadow: 0 20px 35px -12px rgba(0,0,0,0.1);
+            overflow: hidden;
         }
 
-        h1 {
-            font-size: 2rem;
-            font-weight: 650;
-            margin-bottom: 0.5rem;
-            color: #1e4b7a;
-        }
-
-        .sub {
-            color: #5f7f9e;
-            margin-bottom: 2rem;
-            border-left: 3px solid #7ca5c9;
-            padding-left: 1rem;
-        }
-
-        .editor-grid {
+        .toolbar {
+            background: #f8fafc;
+            padding: 16px 24px;
+            border-bottom: 1px solid #e2e8f0;
             display: flex;
-            flex-direction: row;
-            gap: 2rem;
             flex-wrap: wrap;
+            gap: 12px;
+            align-items: center;
+            justify-content: space-between;
         }
 
-        .editor-panel {
-            flex: 2;
-            min-width: 320px;
-            background: white;
-            border-radius: 32px;
-            padding: 1.5rem;
-            box-shadow: 0 8px 20px rgba(0,0,0,0.05);
-            border: 1px solid #dce5f2;
+        .tool-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            align-items: center;
+            background: #fff;
+            padding: 4px 12px;
+            border-radius: 60px;
+            border: 1px solid #e2edf2;
         }
 
-        .settings-panel {
-            flex: 1;
-            min-width: 280px;
-            background: white;
-            border-radius: 32px;
-            padding: 1.5rem;
-            box-shadow: 0 8px 20px rgba(0,0,0,0.05);
-            border: 1px solid #dce5f2;
-        }
-
-        .section-title {
-            font-size: 1.4rem;
-            font-weight: 600;
-            margin: 1rem 0 1rem 0;
-            border-bottom: 2px solid #e2ebf6;
-            padding-bottom: 0.5rem;
-            color: #1e4b7a;
-        }
-
-        .section-title:first-of-type {
-            margin-top: 0;
-        }
-
-        .input-group {
-            margin-bottom: 1rem;
-        }
-
-        label {
-            display: block;
-            font-weight: 500;
-            margin-bottom: 0.3rem;
-            color: #2c4258;
-        }
-
-        input, textarea {
-            width: 100%;
-            padding: 0.6rem 0.9rem;
-            border: 1px solid #cad4e2;
-            border-radius: 20px;
-            font-size: 0.9rem;
-            font-family: inherit;
-            transition: 0.2s;
-        }
-
-        input:focus, textarea:focus {
-            outline: none;
-            border-color: #6d9bc2;
-            box-shadow: 0 0 0 2px rgba(77, 140, 179, 0.2);
-        }
-
-        button {
-            background: #eef2f9;
-            border: none;
-            padding: 0.5rem 1rem;
+        button, .btn-like {
+            background: #ffffff;
+            border: 1px solid #cbd5e1;
+            padding: 6px 14px;
             border-radius: 40px;
+            font-size: 13px;
             font-weight: 500;
             cursor: pointer;
             transition: 0.2s;
-            color: #1e4b7a;
-            font-size: 0.85rem;
+            font-family: inherit;
         }
-
+        button:hover {
+            background: #f1f5f9;
+            border-color: #94a3b8;
+        }
         button.primary {
-            background: #2c6e9e;
+            background: #1e293b;
+            border-color: #1e293b;
             color: white;
         }
-
         button.primary:hover {
-            background: #1e5a86;
+            background: #0f172a;
         }
-
-        button.danger {
-            color: #bc6f6f;
-            background: #fff4f4;
-        }
-
-        button.danger:hover {
-            background: #fde0e0;
-        }
-
-        .year-card {
-            background: #f9fcff;
-            border-radius: 24px;
-            padding: 1rem;
-            margin-bottom: 1.5rem;
-            border: 1px solid #e9eff7;
-        }
-
-        .year-header-editor {
-            display: flex;
-            gap: 0.8rem;
-            align-items: center;
-            flex-wrap: wrap;
-            margin-bottom: 1rem;
-        }
-
-        .year-header-editor input {
-            flex: 2;
-        }
-
-        .event-item-editor {
+        select, input[type="color"], input[type="text"] {
+            border-radius: 40px;
+            border: 1px solid #cbd5e1;
+            padding: 5px 12px;
+            font-size: 13px;
             background: white;
-            border-radius: 20px;
-            padding: 0.8rem;
-            margin-bottom: 0.8rem;
-            border-left: 4px solid #7ca5c9;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            cursor: pointer;
         }
-
-        .event-fields {
-            display: flex;
-            flex-direction: column;
-            gap: 0.5rem;
-        }
-
-        .inline-row {
-            display: flex;
-            gap: 0.5rem;
-            flex-wrap: wrap;
-            align-items: center;
-        }
-
-        .sticker-item {
-            background: #f9fcff;
-            border-radius: 20px;
-            padding: 0.8rem;
-            margin-bottom: 0.8rem;
-        }
-
-        hr {
-            margin: 1rem 0;
-            border: none;
-            border-top: 1px solid #e2ebf6;
-        }
-
-        .output-area {
-            margin-top: 2rem;
-            background: #1e2a36;
-            color: #eef2f9;
-            border-radius: 28px;
-            padding: 1.2rem;
-        }
-
-        .output-area textarea {
-            background: #0f1a22;
-            color: #cbdbe6;
-            border: none;
-            font-family: monospace;
-            font-size: 0.8rem;
-            height: 300px;
-        }
-
-        .flex-btns {
-            display: flex;
-            gap: 1rem;
-            justify-content: flex-end;
-            margin-top: 1rem;
-        }
-
-        .badge {
-            background: #e2ebf6;
-            padding: 0.2rem 0.6rem;
+        .color-label, .font-label {
+            font-size: 12px;
+            font-weight: 500;
+            background: #f1f5f9;
+            padding: 2px 8px;
             border-radius: 30px;
-            font-size: 0.7rem;
         }
-    </style>
-</head>
-<body>
-<div class="builder-container">
-    <h1>📆 타임라인 스튜디오</h1>
-    <div class="sub">시각적으로 편집하고, 완성된 사이트 코드를 받으세요 (GitHub Pages 배포 가능)</div>
 
-    <div class="editor-grid">
-        <!-- 왼쪽: 메인 편집 영역 (연표) -->
-        <div class="editor-panel">
-            <div class="section-title">🌍 세계관 설정</div>
-            <div class="input-group">
-                <label>타이틀 (세계관 제목)</label>
-                <input type="text" id="worldTitleInput" placeholder="예: ✦ 블루 이터니티 ✦" value="✦ 블루 이터니티 ✦">
-            </div>
-            <div class="input-group">
-                <label>부제목</label>
-                <input type="text" id="worldSubInput" placeholder="부제" value="기억의 파도 · 시간을 걷다">
-            </div>
-
-            <div class="section-title">📅 연표 (연도 & 사건)</div>
-            <div id="yearsContainer"></div>
-            <button id="addYearBtn" class="primary" style="margin-top: 0.5rem;">+ 연도 추가</button>
-        </div>
-
-        <!-- 오른쪽: 스티커 & 생성 -->
-        <div class="settings-panel">
-            <div class="section-title">🎨 스티커 (데코 이미지)</div>
-            <div id="stickersContainer"></div>
-            <button id="addStickerBtn" class="primary">+ 스티커 추가</button>
-
-            <hr>
-            <div class="section-title">⚙️ 액션</div>
-            <button id="generateBtn" class="primary" style="width:100%; margin-bottom:0.8rem;">✨ 완성된 사이트 코드 생성 ✨</button>
-            <button id="downloadBtn" class="primary" style="width:100%; background: #4f7a9e;">💾 HTML 파일로 저장</button>
-            <p class="badge" style="margin-top:1rem; text-align:center;">생성된 코드를 복사하여 GitHub Pages에 업로드하세요</p>
-        </div>
-    </div>
-
-    <!-- 결과 출력 영역 -->
-    <div id="outputArea" class="output-area" style="display: none;">
-        <div style="display: flex; justify-content: space-between; align-items: center;">
-            <strong>✅ 생성된 타임라인 사이트 코드</strong>
-            <button id="copyBtn" style="background:#3c6e8f; color:white;">📋 클립보드 복사</button>
-        </div>
-        <textarea id="generatedCode" rows="12" readonly></textarea>
-    </div>
-</div>
-
-<script>
-    // ----- 초기 데이터 구조 -----
-    let timelineData = [
-        {
-            year: "🌀 시작의 물결 (Year 0)",
-            events: [
-                { id: crypto.randomUUID ? crypto.randomUUID() : Date.now()+"-0", title: "푸른 정령의 탄생", description: "대양의 정령 '아쿠아르'가 깨어나 최초의 기억을 심다.", imageUrl: "https://picsum.photos/id/21/500/300" },
-                { id: crypto.randomUUID ? crypto.randomUUID() : Date.now()+"-1", title: "심해의 서약", description: "린, 심해 수호자와 계약을 맺다.", imageUrl: "https://picsum.photos/id/97/500/300" }
-            ]
-        },
-        {
-            year: "🌱 8세 · 최초의 파도",
-            events: [
-                { id: crypto.randomUUID ? crypto.randomUUID() : Date.now()+"-2", title: "별빛 등대를 찾아서", description: "8살, 처음으로 등대의 환영을 보았다.", imageUrl: "https://picsum.photos/id/15/500/300" },
-                { id: crypto.randomUUID ? crypto.randomUUID() : Date.now()+"-3", title: "물의 시험", description: "고대 수정 조각을 발견, 힘을 각성시키다.", imageUrl: "" }
-            ]
+        .split-layout {
+            display: flex;
+            flex-wrap: wrap;
         }
-    ];
-
-    let stickers = [
-        { url: "https://cdn-icons-png.flaticon.com/512/2920/2920272.png", top: "", bottom: "24px", left: "", right: "28px", width: "85px", rotate: "3deg" },
-        { url: "https://cdn-icons-png.flaticon.com/512/2594/2594505.png", top: "110px", bottom: "", left: "20px", right: "", width: "68px", rotate: "-5deg" }
-    ];
-
-    // helper ID
-    function genId() { return Date.now() + '-' + Math.random().toString(36); }
-
-    // 렌더링 연표 편집 UI
-    function renderYearsEditor() {
-        const container = document.getElementById('yearsContainer');
-        if (!container) return;
-        container.innerHTML = '';
-        timelineData.forEach((yearBlock, idx) => {
-            const yearDiv = document.createElement('div');
-            yearDiv.className = 'year-card';
-            yearDiv.dataset.index = idx;
-            // 헤더: 연도 입력 + 삭제
-            const headerDiv = document.createElement('div');
-            headerDiv.className = 'year-header-editor';
-            headerDiv.innerHTML = `
-                <input type="text" class="year-input" value="${escapeHtml(yearBlock.year)}" placeholder="연도 (예: 8세, 1987)">
-                <button class="delete-year-btn danger" data-idx="${idx}">연도 삭제</button>
-            `;
-            // 이벤트 목록
-            const eventsDiv = document.createElement('div');
-            eventsDiv.style.marginTop = '0.8rem';
-            eventsDiv.innerHTML = `<div style="font-weight:500; margin-bottom:0.5rem;">📌 사건들</div>`;
-            const eventsList = document.createElement('div');
-            eventsList.className = 'events-editor-list';
-            yearBlock.events.forEach((event, evIdx) => {
-                const evDiv = document.createElement('div');
-                evDiv.className = 'event-item-editor';
-                evDiv.dataset.evIdx = evIdx;
-                evDiv.innerHTML = `
-                    <div class="event-fields">
-                        <input type="text" class="event-title-input" value="${escapeHtml(event.title)}" placeholder="사건 제목">
-                        <textarea class="event-desc-input" rows="2" placeholder="상세 설명">${escapeHtml(event.description)}</textarea>
-                        <div class="inline-row">
-                            <input type="text" class="event-image-input" value="${escapeHtml(event.imageUrl || '')}" placeholder="이미지 URL (비우면 이미지 칸 없음)" style="flex:2;">
-                            <button class="delete-event-btn danger" data-yearidx="${idx}" data-evidx="${evIdx}">삭제</button>
-                        </div>
-                    </div>
-                `;
-                eventsList.appendChild(evDiv);
-            });
-            // 사건 추가 버튼
-            const addEventBtn = document.createElement('button');
-            addEventBtn.textContent = '+ 사건 추가';
-            addEventBtn.classList.add('add-event-btn');
-            addEventBtn.dataset.idx = idx;
-            addEventBtn.style.marginTop = '0.5rem';
-            addEventBtn.style.fontSize = '0.8rem';
-            
-            eventsDiv.appendChild(eventsList);
-            eventsDiv.appendChild(addEventBtn);
-            yearDiv.appendChild(headerDiv);
-            yearDiv.appendChild(eventsDiv);
-            container.appendChild(yearDiv);
-        });
-        attachYearEvents();
-    }
-
-    function attachYearEvents() {
-        // 연도 입력 변경 저장
-        document.querySelectorAll('.year-input').forEach((input, i) => {
-            input.removeEventListener('change', saveYearChange);
-            input.addEventListener('change', saveYearChange);
-        });
-        function saveYearChange(e) {
-            const yearCard = e.target.closest('.year-card');
-            const idx = Array.from(document.querySelectorAll('.year-card')).indexOf(yearCard);
-            if (idx !== -1 && timelineData[idx]) {
-                timelineData[idx].year = e.target.value;
-            }
+        .editor-panel {
+            flex: 1.2;
+            min-width: 280px;
+            background: #ffffff;
+            border-right: 1px solid #e9edf2;
+            padding: 20px;
+            max-height: 75vh;
+            overflow-y: auto;
         }
-        // 연도 삭제
-        document.querySelectorAll('.delete-year-btn').forEach(btn => {
-            btn.removeEventListener('click', handleDeleteYear);
-            btn.addEventListener('click', handleDeleteYear);
-        });
-        function handleDeleteYear(e) {
-            const idx = parseInt(e.target.dataset.idx);
-            if (!isNaN(idx) && idx >= 0 && idx < timelineData.length) {
-                timelineData.splice(idx, 1);
-                renderYearsEditor();
-            }
+        .preview-panel {
+            flex: 2;
+            background: #fefefe;
+            padding: 20px;
+            max-height: 75vh;
+            overflow-y: auto;
         }
-        // 사건 삭제
-        document.querySelectorAll('.delete-event-btn').forEach(btn => {
-            btn.removeEventListener('click', handleDeleteEvent);
-            btn.addEventListener('click', handleDeleteEvent);
-        });
-        function handleDeleteEvent(e) {
-            const yearIdx = parseInt(e.target.dataset.yearidx);
-            const evIdx = parseInt(e.target.dataset.evidx);
-            if (!isNaN(yearIdx) && timelineData[yearIdx] && timelineData[yearIdx].events[evIdx]) {
-                timelineData[yearIdx].events.splice(evIdx, 1);
-                renderYearsEditor();
-            }
-        }
-        // 사건 제목/설명/이미지 변경 저장 (실시간 blur)
-        document.querySelectorAll('.event-title-input, .event-desc-input, .event-image-input').forEach(field => {
-            field.removeEventListener('blur', saveEventField);
-            field.addEventListener('blur', saveEventField);
-        });
-        function saveEventField(e) {
-            const evDiv = e.target.closest('.event-item-editor');
-            if (!evDiv) return;
-            const yearCard = evDiv.closest('.year-card');
-            const yearIdx = Array.from(document.querySelectorAll('.year-card')).indexOf(yearCard);
-            const evIdx = Array.from(evDiv.parentNode.children).indexOf(evDiv);
-            if (yearIdx !== -1 && timelineData[yearIdx] && timelineData[yearIdx].events[evIdx]) {
-                const event = timelineData[yearIdx].events[evIdx];
-                const titleInput = evDiv.querySelector('.event-title-input');
-                const descInput = evDiv.querySelector('.event-desc-input');
-                const imgInput = evDiv.querySelector('.event-image-input');
-                if (titleInput) event.title = titleInput.value;
-                if (descInput) event.description = descInput.value;
-                if (imgInput) event.imageUrl = imgInput.value;
-            }
-        }
-        // 사건 추가
-        document.querySelectorAll('.add-event-btn').forEach(btn => {
-            btn.removeEventListener('click', addNewEvent);
-            btn.addEventListener('click', addNewEvent);
-        });
-        function addNewEvent(e) {
-            const yearIdx = parseInt(e.target.dataset.idx);
-            if (!isNaN(yearIdx) && timelineData[yearIdx]) {
-                timelineData[yearIdx].events.push({
-                    id: genId(),
-                    title: "새 사건",
-                    description: "사건 설명을 입력하세요",
-                    imageUrl: ""
-                });
-                renderYearsEditor();
-            }
-        }
-    }
 
-    // 스티커 UI 렌더링
-    function renderStickersEditor() {
-        const container = document.getElementById('stickersContainer');
-        if (!container) return;
-        container.innerHTML = '';
-        stickers.forEach((sticker, idx) => {
-            const div = document.createElement('div');
-            div.className = 'sticker-item';
-            div.innerHTML = `
-                <div class="input-group"><label>이미지 URL</label><input type="text" class="sticker-url" value="${escapeHtml(sticker.url)}"></div>
-                <div class="inline-row"><input type="text" class="sticker-top" placeholder="top (예: 20px)" value="${sticker.top || ''}"><input type="text" class="sticker-bottom" placeholder="bottom" value="${sticker.bottom || ''}"></div>
-                <div class="inline-row"><input type="text" class="sticker-left" placeholder="left" value="${sticker.left || ''}"><input type="text" class="sticker-right" placeholder="right" value="${sticker.right || ''}"></div>
-                <div class="inline-row"><input type="text" class="sticker-width" placeholder="width (예: 80px)" value="${sticker.width || '70px'}"><input type="text" class="sticker-rotate" placeholder="rotate (예: 5deg)" value="${sticker.rotate || '0deg'}"></div>
-                <button class="delete-sticker-btn danger" data-idx="${idx}">스티커 삭제</button>
-            `;
-            container.appendChild(div);
-        });
-        attachStickerEvents();
-    }
-
-    function attachStickerEvents() {
-        // 각 필드 blur 시 저장
-        document.querySelectorAll('.sticker-url, .sticker-top, .sticker-bottom, .sticker-left, .sticker-right, .sticker-width, .sticker-rotate').forEach(field => {
-            field.removeEventListener('blur', updateSticker);
-            field.addEventListener('blur', updateSticker);
-        });
-        function updateSticker(e) {
-            const stickerDiv = e.target.closest('.sticker-item');
-            if (!stickerDiv) return;
-            const idx = Array.from(document.querySelectorAll('.sticker-item')).indexOf(stickerDiv);
-            if (idx >= 0 && stickers[idx]) {
-                const urlInput = stickerDiv.querySelector('.sticker-url');
-                const topInput = stickerDiv.querySelector('.sticker-top');
-                const bottomInput = stickerDiv.querySelector('.sticker-bottom');
-                const leftInput = stickerDiv.querySelector('.sticker-left');
-                const rightInput = stickerDiv.querySelector('.sticker-right');
-                const widthInput = stickerDiv.querySelector('.sticker-width');
-                const rotateInput = stickerDiv.querySelector('.sticker-rotate');
-                stickers[idx] = {
-                    url: urlInput ? urlInput.value : stickers[idx].url,
-                    top: topInput ? topInput.value : '',
-                    bottom: bottomInput ? bottomInput.value : '',
-                    left: leftInput ? leftInput.value : '',
-                    right: rightInput ? rightInput.value : '',
-                    width: widthInput ? widthInput.value : '70px',
-                    rotate: rotateInput ? rotateInput.value : '0deg'
-                };
-            }
+        .era-card {
+            background: #f9fbfd;
+            border: 1px solid #e4e9f0;
+            border-radius: 24px;
+            margin-bottom: 20px;
+            padding: 12px 14px;
         }
-        document.querySelectorAll('.delete-sticker-btn').forEach(btn => {
-            btn.removeEventListener('click', deleteSticker);
-            btn.addEventListener('click', deleteSticker);
-        });
-        function deleteSticker(e) {
-            const idx = parseInt(e.target.dataset.idx);
-            if (!isNaN(idx) && idx >= 0 && idx < stickers.length) {
-                stickers.splice(idx, 1);
-                renderStickersEditor();
-            }
+        .era-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 12px;
+            flex-wrap: wrap;
         }
-    }
-
-    // add year
-    document.getElementById('addYearBtn')?.addEventListener('click', () => {
-        timelineData.push({
-            year: "새 연도 (클릭해서 수정)",
-            events: []
-        });
-        renderYearsEditor();
-    });
-    document.getElementById('addStickerBtn')?.addEventListener('click', () => {
-        stickers.push({
-            url: "https://cdn-icons-png.flaticon.com/512/2920/2920272.png",
-            top: "", bottom: "20px", left: "", right: "20px", width: "70px", rotate: "0deg"
-        });
-        renderStickersEditor();
-    });
-
-    // ========== 최종 HTML 생성 템플릿 ==========
-    function generateFinalSiteCode() {
-        const worldTitle = document.getElementById('worldTitleInput').value || "타임라인";
-        const worldSub = document.getElementById('worldSubInput').value || "";
-        // 데이터를 JSON으로 정리 (imageUrl 빈 문자열 처리 유지)
-        const finalTimeline = timelineData.map(yearBlock => ({
-            year: yearBlock.year,
-            events: yearBlock.events.map(ev => ({
-                id: ev.id,
-                title: ev.title,
-                description: ev.description,
-                imageUrl: ev.imageUrl || ""
-            }))
-        }));
-        const finalStickers = stickers.filter(s => s.url && s.url.trim() !== "").map(s => ({
-            url: s.url,
-            top: s.top || "",
-            bottom: s.bottom || "",
-            left: s.left || "",
-            right: s.right || "",
-            width: s.width || "70px",
-            rotate: s.rotate || "0deg"
-        }));
-        
-        // 이스케이프 함수
-        function escapeJs(str) {
-            return JSON.stringify(str).slice(1, -1);
+        .drag-handle-era {
+            cursor: grab;
+            font-size: 18px;
+            padding: 4px;
+            user-select: none;
+            color: #7c8ba0;
         }
-        // 템플릿 생성 (긴 html)
-        return `<!DOCTYPE html>
-<html lang="ko">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>${escapeJs(worldTitle)} · 타임라인</title>
-    <style>
-        * { margin:0; padding:0; box-sizing: border-box; }
-        body { background: #eef2f9; font-family: 'Inter', 'Segoe UI', 'Noto Sans KR', sans-serif; color: #1a2c3e; line-height: 1.5; }
-        .app-container { display: flex; flex-direction: row; width: 100%; min-height: 100vh; }
-        .timeline-panel { width: 34%; max-width: 420px; background: rgba(255,255,255,0.94); backdrop-filter: blur(4px); border-right: 1px solid #dce5f2; display: flex; flex-direction: column; height: 100vh; position: sticky; top: 0; }
-        .timeline-header { padding: 2rem 1.6rem 1.2rem; border-bottom: 1px solid #e2ebf6; }
-        .world-title { font-size: 1.9rem; font-weight: 700; background: linear-gradient(135deg, #1e4b7a, #2c6e9e); background-clip: text; -webkit-background-clip: text; color: transparent; }
-        .sub { font-size: 0.8rem; color: #5f7f9e; margin-top: 6px; }
-        .timeline-list { flex:1; overflow-y: auto; padding: 1.2rem 1rem; }
-        .year-item { margin-bottom: 1rem; background: white; border-radius: 20px; border: 1px solid #e9eff7; }
-        .year-header { display: flex; justify-content: space-between; align-items: center; padding: 1rem 1.3rem; cursor: pointer; font-weight: 650; font-size: 1.3rem; color: #1e4b7a; }
-        .year-header:hover { background: #f0f6fe; }
-        .toggle-icon { font-size: 1.1rem; color: #5486a6; }
-        .events-container { display: none; padding: 0.3rem 0.6rem 1rem 1rem; border-top: 1px solid #eef3fc; }
-        .events-container.open { display: block; }
-        .event-item { background: #f9fcff; margin: 0.7rem 0; padding: 0.8rem 1.1rem; border-radius: 18px; cursor: pointer; border-left: 4px solid #7ca5c9; transition: 0.2s; }
-        .event-item:hover { background: #e9f0fa; transform: translateX(5px); }
-        .event-title { font-weight: 550; color: #1f4468; display: flex; align-items: center; gap: 8px; }
-        .event-title::before { content: "◆"; font-size: 0.75rem; color: #3a7ca5; }
-        .detail-panel { flex:1; background: #f5faff; padding: 2rem; overflow-y: auto; }
-        .detail-card { max-width: 780px; margin: 0 auto; background: white; border-radius: 40px; padding: 2rem; box-shadow: 0 20px 35px -12px rgba(0,32,64,0.08); border: 1px solid #e2edf9; }
-        .detail-title { font-size: 2rem; font-weight: 700; color: #1a4c74; border-left: 5px solid #4c8bb8; padding-left: 1.2rem; margin-bottom: 1.2rem; }
-        .detail-description { font-size: 1.05rem; line-height: 1.65; color: #2c4258; white-space: pre-wrap; margin-bottom: 1.8rem; }
-        .detail-image { margin-top: 1rem; border-radius: 32px; overflow: hidden; display: flex; justify-content: center; }
-        .detail-image img { max-width: 100%; max-height: 320px; object-fit: contain; border-radius: 24px; }
-        .empty-detail { text-align: center; padding: 3rem; color: #7e9bb5; }
-        .sticker { position: fixed; z-index: 10; pointer-events: none; filter: drop-shadow(0 8px 12px rgba(0,0,0,0.05)); transition: 0.2s; opacity:0.7; }
-        .sticker:hover { transform: rotate(1deg) scale(1.02); }
-        @media (max-width: 780px) { .app-container { flex-direction: column; } .timeline-panel { width:100%; height:55vh; position:relative; } .sticker { display: none; } }
-        footer { font-size:0.7rem; text-align:center; padding:0.9rem; color:#7c9bbc; border-top:1px solid #e9f0f8; }
+        .drag-handle-era:active { cursor: grabbing; }
+        .era-title-input {
+            font-weight: bold;
+            font-size: 1.2rem;
+            border: 1px solid transparent;
+            background: transparent;
+            padding: 4px 8px;
+            border-radius: 16px;
+            width: 140px;
+        }
+        .era-title-input:focus {
+            border-color: #b9c8e8;
+            background: white;
+            outline: none;
+        }
+        .era-actions {
+            margin-left: auto;
+            display: flex;
+            gap: 6px;
+        }
+        .event-list {
+            margin-left: 28px;
+            margin-top: 8px;
+        }
+        .event-item {
+            background: white;
+            border-left: 3px solid #cbdbe0;
+            border-radius: 18px;
+            padding: 8px 12px;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        .drag-handle-event {
+            cursor: grab;
+            font-size: 16px;
+            color: #8b9abb;
+        }
+        .drag-handle-event:active { cursor: grabbing; }
+        .event-title-input {
+            font-weight: 600;
+            border: 1px solid #e2e8f0;
+            background: #fff;
+            border-radius: 24px;
+            padding: 4px 12px;
+            width: 160px;
+        }
+        .event-content-input {
+            flex: 2;
+            min-width: 180px;
+            border: 1px solid #e2e8f0;
+            background: #fff;
+            border-radius: 24px;
+            padding: 4px 12px;
+        }
+        .small-btn {
+            background: none;
+            border: none;
+            font-size: 16px;
+            cursor: pointer;
+            padding: 4px 8px;
+            border-radius: 30px;
+        }
+        .small-btn:hover { background: #eef2ff; }
+        .add-event-btn {
+            margin-top: 8px;
+            margin-left: 28px;
+            background: #ecfdf5;
+            border: 1px solid #b3e0cf;
+            font-size: 12px;
+        }
+        .add-era-btn {
+            width: 100%;
+            margin-top: 16px;
+            background: #f1f5f9;
+        }
+        .collapsed-message {
+            margin-left: 28px;
+            padding: 12px;
+            color: #7f8c8d;
+            font-size: 13px;
+            font-style: italic;
+            background: #f8fafc;
+            border-radius: 20px;
+            text-align: center;
+        }
+        @media (max-width: 780px) {
+            .split-layout { flex-direction: column; }
+            .editor-panel, .preview-panel { max-height: 60vh; }
+        }
+        .toc-nav {
+            background: #f1f5f9;
+            border-radius: 40px;
+            padding: 12px;
+            margin-bottom: 20px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+        .toc-nav a {
+            text-decoration: none;
+            color: #2c3e66;
+            background: white;
+            padding: 4px 12px;
+            border-radius: 40px;
+            border: 1px solid #dce5ef;
+            font-size: 13px;
+        }
+        .color-custom-details, .font-custom-details {
+            background: #f0f4fa;
+            border-radius: 28px;
+            padding: 8px 12px;
+            margin-top: 4px;
+        }
+        .color-custom-details summary, .font-custom-details summary {
+            font-weight: 500;
+            cursor: pointer;
+            list-style: none;
+            font-size: 13px;
+        }
+        .color-custom-details summary::-webkit-details-marker, .font-custom-details summary::-webkit-details-marker { display: none; }
+        .color-custom-details summary::before { content: "🎨 "; }
+        .font-custom-details summary::before { content: "🔤 "; }
     </style>
 </head>
 <body>
 <div class="app-container">
-    <aside class="timeline-panel">
-        <div class="timeline-header">
-            <div class="world-title">${escapeJs(worldTitle)}</div>
-            <div class="sub">${escapeJs(worldSub)}</div>
+    <div class="toolbar">
+        <div class="tool-group">
+            <span>📌 제목</span>
+            <input type="text" id="timelineTitleInput" placeholder="타임라인 제목" value="CHRONOLOGICAL ARCHIVE" style="border-radius:40px;padding:5px 12px;border:1px solid #cbd5e1;">
         </div>
-        <div class="timeline-list" id="timelineList"></div>
-        <footer>📅 연도 클릭 → 사건 열기 · 사건 클릭 → 상세 정보</footer>
-    </aside>
-    <main class="detail-panel"><div class="detail-card" id="detailCard"><div class="empty-detail">✨ 연표에서 사건을 선택하세요 ✨</div></div></main>
+        <div class="tool-group">
+            <span>🎨 테마</span>
+            <select id="themeSelect">
+                <option value="dcdata">BATCOMPUTER (다크 데이터파일)</option>
+                <option value="minimal">미니멀 클린</option>
+                <option value="cute">🌸 Cute Fantasy</option>
+                <option value="gothic">🦇 Gothic Fantasy</option>
+            </select>
+            <details class="color-custom-details">
+                <summary>컬러 커스텀</summary>
+                <div style="display:flex;flex-wrap:wrap;gap:12px;margin-top:12px;">
+                    <div><span class="color-label">배경</span> <input type="color" id="bgColorPicker"></div>
+                    <div><span class="color-label">텍스트</span> <input type="color" id="textColorPicker"></div>
+                    <div><span class="color-label">강조(포인트)</span> <input type="color" id="accentColorPicker"></div>
+                    <div><span class="color-label">카드 배경</span> <input type="color" id="cardBgPicker"></div>
+                    <div><span class="color-label">테두리</span> <input type="color" id="borderColorPicker"></div>
+                </div>
+                <button id="resetColorsBtn" style="margin-top:8px; font-size:12px;">⟳ 테마 기본 색상</button>
+            </details>
+            <details class="font-custom-details">
+                <summary>폰트 설정</summary>
+                <div style="margin-top:12px;">
+                    <div style="margin-bottom:8px;">
+                        <select id="fontTypeSelect">
+                            <option value="system">시스템 기본 폰트</option>
+                            <option value="serif">세리프 (Serif)</option>
+                            <option value="sans">산세리프 (Sans-serif)</option>
+                            <option value="mono">모노스페이스 (Monospace)</option>
+                            <option value="custom">사용자 정의 웹폰트</option>
+                        </select>
+                    </div>
+                    <div id="customFontPanel" style="display:none; flex-wrap:wrap; gap:8px; align-items:center; margin-top:6px;">
+                        <input type="text" id="customFontName" placeholder="폰트 이름 (예: Mabiyet)" style="flex:1; min-width:120px;">
+                        <input type="text" id="customFontUrl" placeholder="웹폰트 URL (woff2)" style="flex:2; min-width:180px;">
+                        <button id="loadExampleFont" type="button" style="font-size:12px;">📜 예제: Mabinogi Classic</button>
+                    </div>
+                    <div style="font-size:12px; margin-top:8px; color:#5a6e8a;">※ 사용자 정의 시 @font-face 자동 생성</div>
+                </div>
+            </details>
+        </div>
+        <div class="tool-group">
+            <button id="darkPreviewBtn">🌙 다크 모드</button>
+            <button id="lightPreviewBtn">☀️ 라이트 모드</button>
+            <button id="exportHtmlBtn" class="primary">📄 HTML 내보내기</button>
+            <button id="copyHtmlBtn">📋 복사</button>
+        </div>
+        <div class="tool-group">
+            <button id="saveJsonBtn">💾 JSON 저장</button>
+            <label for="importJsonFile" class="btn-like">📂 JSON 불러오기</label>
+            <input type="file" id="importJsonFile" accept=".json" style="display:none">
+            <button id="resetDemoBtn">⟳ 기본 예제</button>
+        </div>
+    </div>
+
+    <div class="split-layout">
+        <div class="editor-panel" id="editorPanel">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 12px;">
+                <strong>📝 시대 & 사건 편집기 (드래그 정렬)</strong>
+                <span style="font-size:12px;">⋮⋮ 핸들로 순서 변경</span>
+            </div>
+            <div id="erasContainer"></div>
+            <button id="addEraBtn" class="add-era-btn">✨ 새로운 시대 추가</button>
+            <div class="toc-nav" id="autoToc" style="margin-top: 24px;"></div>
+        </div>
+        <div class="preview-panel" id="previewPanel">
+            <div style="display:flex; justify-content:space-between; margin-bottom:12px;">
+                <strong>📖 타임라인 미리보기</strong>
+                <span id="autoSaveStatus" style="font-size:11px;">✓ 자동 저장</span>
+            </div>
+            <div id="previewArea" class="preview-wrapper"></div>
+        </div>
+    </div>
 </div>
-<div id="stickerContainer"></div>
+
 <script>
-    const timelineData = ${JSON.stringify(finalTimeline)};
-    const stickers = ${JSON.stringify(finalStickers)};
-    function escapeHtml(str){ if(!str) return ""; return str.replace(/[&<>]/g, function(m){ if(m==='&') return '&amp;'; if(m==='<') return '&lt;'; if(m==='>') return '&gt;'; return m;}); }
-    function displayEventDetail(ev){
-        const card=document.getElementById('detailCard');
-        if(!ev){ card.innerHTML='<div class="empty-detail">✨ 사건을 선택하세요</div>'; return; }
-        const hasImage = ev.imageUrl && ev.imageUrl.trim() !== "";
-        const imageHtml = hasImage ? '<div class="detail-image"><img src="'+escapeHtml(ev.imageUrl)+'" alt="event" onerror="this.onerror=null;this.style.display=\'none\'"></div>' : "";
-        card.innerHTML = '<div class="detail-card"><div class="detail-title">📘 '+escapeHtml(ev.title)+'</div><div class="detail-description">'+escapeHtml(ev.description).replace(/\\n/g,'<br>')+'</div>'+imageHtml+'<div style="margin-top:1rem; font-size:0.7rem;">⚡ 맞춤형 타임라인</div></div>';
-    }
-    function renderTimeline(){
-        const container=document.getElementById('timelineList'); if(!container) return;
-        container.innerHTML='';
-        timelineData.forEach((yearBlock,idx)=>{
-            const yearDiv=document.createElement('div'); yearDiv.className='year-item';
-            const header=document.createElement('div'); header.className='year-header';
-            header.innerHTML='<span class="year-name">📆 '+escapeHtml(yearBlock.year)+'</span><span class="toggle-icon">▶</span>';
-            const evContainer=document.createElement('div'); evContainer.className='events-container';
-            yearBlock.events.forEach(ev=>{
-                const evDiv=document.createElement('div'); evDiv.className='event-item';
-                evDiv.innerHTML='<div class="event-title">'+escapeHtml(ev.title)+'</div>';
-                evDiv.addEventListener('click',(e)=>{ e.stopPropagation(); displayEventDetail(ev); });
-                evContainer.appendChild(evDiv);
-            });
-            let open=false;
-            header.addEventListener('click',()=>{ if(!open){ evContainer.classList.add('open'); header.querySelector('.toggle-icon').innerHTML='▼'; } else { evContainer.classList.remove('open'); header.querySelector('.toggle-icon').innerHTML='▶'; } open=!open; });
-            yearDiv.appendChild(header); yearDiv.appendChild(evContainer); container.appendChild(yearDiv);
-        });
-    }
-    function renderStickers(){
-        const container=document.getElementById('stickerContainer'); if(!container) return;
-        container.innerHTML='';
-        stickers.forEach(s=>{
-            const div=document.createElement('div'); div.className='sticker'; div.style.position='fixed'; div.style.zIndex='10'; div.style.pointerEvents='none';
-            if(s.top) div.style.top=s.top; if(s.bottom) div.style.bottom=s.bottom; if(s.left) div.style.left=s.left; if(s.right) div.style.right=s.right;
-            div.style.width=s.width; div.style.transform='rotate('+s.rotate+')';
-            div.innerHTML='<img src="'+escapeHtml(s.url)+'" alt="sticker" style="width:100%; opacity:0.75;">';
-            container.appendChild(div);
-        });
-    }
-    renderTimeline(); renderStickers();
-</script>
-</body>
-</html>`;
+    // ------------------ 데이터 모델 ------------------
+    let timelineData = [];
+    let nextId = 100;
+    let dragSource = { type: null, eraId: null, eventId: null };
+
+    // 사용자 설정 (색상 + 폰트)
+    let timelineTitle = "CHRONOLOGICAL ARCHIVE";
+    let customColors = {
+        bg: "#0d0f12",
+        text: "#cfd7df",
+        accent: "#7cc7ff",
+        cardBg: "#13171d",
+        border: "#26313d"
+    };
+    let currentTheme = "dcdata";
+    let darkModePreview = false;
+
+    // 폰트 설정
+    let fontSettings = {
+        type: "system",   // "system", "serif", "sans", "mono", "custom"
+        customName: "",
+        customUrl: ""
+    };
+
+    function genId() { return Date.now() + Math.random() * 10000 + (nextId++); }
+
+    const defaultData = () => [
+        { id: genId(), year: "2010", open: true, events: [
+            { id: genId(), title: "첫 조우", content: "딕 그레이슨과 에이든, 어둠의 골목에서 운명처럼 만나다.", open: true },
+            { id: genId(), title: "타이탄즈 합류", content: "영웅으로서의 첫 발걸음, 팀과의 인연이 시작되다.", open: false }
+        ] },
+        { id: genId(), year: "2015", open: true, events: [
+            { id: genId(), title: "블뤼드헤이븐 이주", content: "독립적인 활동을 위한 거처, 그림자와 함께.", open: false },
+            { id: genId(), title: "붉은 두건 사건", content: "제이슨 토드의 귀환, 과거와의 화해.", open: false }
+        ] },
+        { id: genId(), year: "2020", open: false, events: [
+            { id: genId(), title: "화해와 이해", content: "진정한 파트너로 거듭나다.", open: false }
+        ] }
+    ];
+
+    // 테마별 기본 색상
+    function getDefaultColors(theme) {
+        switch(theme) {
+            case "dcdata": return { bg:"#0d0f12", text:"#cfd7df", accent:"#7cc7ff", cardBg:"#13171d", border:"#26313d" };
+            case "minimal": return { bg:"#ffffff", text:"#1f2a3e", accent:"#4f7ea0", cardBg:"#f8faff", border:"#e4e9f2" };
+            case "cute": return { bg:"#fff9fb", text:"#5e3a46", accent:"#f4a2b6", cardBg:"#ffffffd9", border:"#ffdee8" };
+            case "gothic": return { bg:"#1c171d", text:"#ece2e8", accent:"#b87c9f", cardBg:"#2c212b", border:"#6b4e5e" };
+            default: return { bg:"#0d0f12", text:"#cfd7df", accent:"#7cc7ff", cardBg:"#13171d", border:"#26313d" };
+        }
     }
 
-    // 생성 버튼
-    const generateBtn = document.getElementById('generateBtn');
-    const outputArea = document.getElementById('outputArea');
-    const codeTextarea = document.getElementById('generatedCode');
-    generateBtn.addEventListener('click', () => {
-        const finalCode = generateFinalSiteCode();
-        codeTextarea.value = finalCode;
-        outputArea.style.display = 'block';
-        outputArea.scrollIntoView({ behavior: 'smooth' });
-    });
-    document.getElementById('copyBtn')?.addEventListener('click', () => {
-        if (codeTextarea.value) {
-            navigator.clipboard.writeText(codeTextarea.value);
-            alert('코드가 클립보드에 복사되었습니다!');
+    function applyDefaultColors() {
+        const def = getDefaultColors(currentTheme);
+        customColors = { ...def };
+        document.getElementById("bgColorPicker").value = customColors.bg;
+        document.getElementById("textColorPicker").value = customColors.text;
+        document.getElementById("accentColorPicker").value = customColors.accent;
+        document.getElementById("cardBgPicker").value = customColors.cardBg;
+        document.getElementById("borderColorPicker").value = customColors.border;
+        renderPreview();
+        saveAll();
+    }
+
+    // 폰트 관련 UI 동기화
+    function syncFontUI() {
+        const typeSelect = document.getElementById("fontTypeSelect");
+        typeSelect.value = fontSettings.type;
+        const customPanel = document.getElementById("customFontPanel");
+        if (fontSettings.type === "custom") {
+            customPanel.style.display = "flex";
+        } else {
+            customPanel.style.display = "none";
         }
-    });
-    document.getElementById('downloadBtn')?.addEventListener('click', () => {
-        const finalCode = generateFinalSiteCode();
-        const blob = new Blob([finalCode], {type: 'text/html'});
-        const a = document.createElement('a');
-        const url = URL.createObjectURL(blob);
-        a.href = url;
-        a.download = 'timeline_site.html';
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-    });
+        document.getElementById("customFontName").value = fontSettings.customName;
+        document.getElementById("customFontUrl").value = fontSettings.customUrl;
+    }
+
+    // 폰트 CSS 생성 (웹폰트 @font-face 포함)
+    function getFontCSS() {
+        if (fontSettings.type === "system") return "";
+        if (fontSettings.type === "serif") return "font-family: Georgia, 'Times New Roman', serif;";
+        if (fontSettings.type === "sans") return "font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;";
+        if (fontSettings.type === "mono") return "font-family: 'Courier New', Consolas, monospace;";
+        if (fontSettings.type === "custom" && fontSettings.customName && fontSettings.customUrl) {
+            // @font-face는 style 태그로 따로 추가
+            return `font-family: '${fontSettings.customName}', fallback, sans-serif;`;
+        }
+        return "";
+    }
+
+    function getFontFaceRule() {
+        if (fontSettings.type === "custom" && fontSettings.customName && fontSettings.customUrl) {
+            return `@font-face { font-family: '${fontSettings.customName}'; src: url('${fontSettings.customUrl}') format('woff2'); font-weight: normal; font-display: swap; }`;
+        }
+        return "";
+    }
+
+    // 저장 / 불러오기 (색상 + 폰트)
+    function saveAll() {
+        try {
+            localStorage.setItem("chronotimeline_data", JSON.stringify(timelineData));
+            const settings = { timelineTitle, customColors, currentTheme, darkModePreview, fontSettings };
+            localStorage.setItem("chronotimeline_settings", JSON.stringify(settings));
+            document.getElementById("autoSaveStatus").innerHTML = "✓ 저장됨 " + new Date().toLocaleTimeString();
+            setTimeout(() => { if(document.getElementById("autoSaveStatus")) document.getElementById("autoSaveStatus").innerHTML = "✓ 자동 저장"; }, 1500);
+        } catch(e) {}
+    }
+
+    function loadAll() {
+        const dataRaw = localStorage.getItem("chronotimeline_data");
+        if(dataRaw) {
+            try { const parsed = JSON.parse(dataRaw); if(Array.isArray(parsed)) timelineData = parsed; } catch(e) {}
+        }
+        const settingsRaw = localStorage.getItem("chronotimeline_settings");
+        if(settingsRaw) {
+            try {
+                const s = JSON.parse(settingsRaw);
+                if(s.timelineTitle) timelineTitle = s.timelineTitle;
+                if(s.customColors) customColors = s.customColors;
+                if(s.currentTheme) currentTheme = s.currentTheme;
+                if(s.darkModePreview !== undefined) darkModePreview = s.darkModePreview;
+                if(s.fontSettings) fontSettings = s.fontSettings;
+                document.getElementById("timelineTitleInput").value = timelineTitle;
+                document.getElementById("themeSelect").value = currentTheme;
+                document.getElementById("bgColorPicker").value = customColors.bg;
+                document.getElementById("textColorPicker").value = customColors.text;
+                document.getElementById("accentColorPicker").value = customColors.accent;
+                document.getElementById("cardBgPicker").value = customColors.cardBg;
+                document.getElementById("borderColorPicker").value = customColors.border;
+                syncFontUI();
+            } catch(e) {}
+        }
+        if(!timelineData.length) timelineData = defaultData();
+    }
+
+    // ------------------ 편집기 렌더링 ------------------
+    function renderEditor() {
+        const container = document.getElementById("erasContainer");
+        if(!container) return;
+        container.innerHTML = "";
+        timelineData.forEach((era, idx) => {
+            const eraCard = document.createElement("div");
+            eraCard.className = "era-card";
+            eraCard.setAttribute("data-era-id", era.id);
+            const headerDiv = document.createElement("div");
+            headerDiv.className = "era-header";
+            const dragHandle = document.createElement("span");
+            dragHandle.innerHTML = "⋮⋮";
+            dragHandle.className = "drag-handle-era";
+            dragHandle.setAttribute("draggable", "true");
+            dragHandle.setAttribute("data-era-id", era.id);
+            dragHandle.addEventListener("dragstart", (e) => {
+                dragSource = { type: "era", eraId: era.id };
+                e.dataTransfer.setData("text/plain", era.id);
+            });
+            dragHandle.addEventListener("dragend", () => { dragSource = { type: null }; });
+            
+            const yearInput = document.createElement("input");
+            yearInput.type = "text";
+            yearInput.value = era.year;
+            yearInput.className = "era-title-input";
+            yearInput.addEventListener("change", (e) => { era.year = e.target.value; syncAll(); });
+            
+            const actionsDiv = document.createElement("div");
+            actionsDiv.className = "era-actions";
+            const toggleOpenBtn = document.createElement("button");
+            toggleOpenBtn.textContent = era.open ? "📂 펼침" : "📁 접힘";
+            toggleOpenBtn.className = "small-btn";
+            toggleOpenBtn.onclick = () => { era.open = !era.open; syncAll(); };
+            const delBtn = document.createElement("button");
+            delBtn.textContent = "🗑️";
+            delBtn.className = "small-btn";
+            delBtn.onclick = () => { deleteEra(era.id); };
+            actionsDiv.appendChild(toggleOpenBtn);
+            actionsDiv.appendChild(delBtn);
+            headerDiv.appendChild(dragHandle);
+            headerDiv.appendChild(yearInput);
+            headerDiv.appendChild(actionsDiv);
+            eraCard.appendChild(headerDiv);
+            
+            if (era.open) {
+                const eventListDiv = document.createElement("div");
+                eventListDiv.className = "event-list";
+                eventListDiv.setAttribute("data-era-id", era.id);
+                era.events.forEach((ev, evIdx) => {
+                    const eventDiv = document.createElement("div");
+                    eventDiv.className = "event-item";
+                    eventDiv.setAttribute("data-event-id", ev.id);
+                    eventDiv.setAttribute("data-era-id", era.id);
+                    const dragEventHandle = document.createElement("span");
+                    dragEventHandle.innerHTML = "⠿";
+                    dragEventHandle.className = "drag-handle-event";
+                    dragEventHandle.setAttribute("draggable", "true");
+                    dragEventHandle.setAttribute("data-era-id", era.id);
+                    dragEventHandle.setAttribute("data-event-id", ev.id);
+                    dragEventHandle.addEventListener("dragstart", (e) => {
+                        dragSource = { type: "event", eraId: era.id, eventId: ev.id };
+                        e.dataTransfer.setData("text/plain", `${era.id}|${ev.id}`);
+                    });
+                    dragEventHandle.addEventListener("dragend", () => { dragSource = { type: null }; });
+                    
+                    const titleInput = document.createElement("input");
+                    titleInput.type = "text";
+                    titleInput.value = ev.title;
+                    titleInput.className = "event-title-input";
+                    titleInput.addEventListener("change", (e) => { ev.title = e.target.value; syncAll(); });
+                    
+                    const contentInput = document.createElement("input");
+                    contentInput.value = ev.content;
+                    contentInput.className = "event-content-input";
+                    contentInput.placeholder = "사건 내용";
+                    contentInput.addEventListener("change", (e) => { ev.content = e.target.value; syncAll(); });
+                    
+                    const toggleEventBtn = document.createElement("button");
+                    toggleEventBtn.textContent = ev.open ? "▼" : "▶";
+                    toggleEventBtn.className = "small-btn";
+                    toggleEventBtn.onclick = () => { ev.open = !ev.open; syncAll(); };
+                    const delEventBtn = document.createElement("button");
+                    delEventBtn.textContent = "✖";
+                    delEventBtn.className = "small-btn";
+                    delEventBtn.onclick = () => { deleteEvent(era.id, ev.id); };
+                    
+                    eventDiv.appendChild(dragEventHandle);
+                    eventDiv.appendChild(titleInput);
+                    eventDiv.appendChild(contentInput);
+                    eventDiv.appendChild(toggleEventBtn);
+                    eventDiv.appendChild(delEventBtn);
+                    eventListDiv.appendChild(eventDiv);
+                });
+                const addEventButton = document.createElement("button");
+                addEventButton.textContent = "+ 새 사건 추가";
+                addEventButton.className = "add-event-btn";
+                addEventButton.onclick = () => {
+                    era.events.push({ id: genId(), title: "새로운 기록", content: "내용을 입력하세요", open: true });
+                    syncAll();
+                };
+                eventListDiv.appendChild(addEventButton);
+                eraCard.appendChild(eventListDiv);
+            } else {
+                const msg = document.createElement("div");
+                msg.className = "collapsed-message";
+                msg.innerHTML = "🔒 이 시대는 접혀있습니다. [📁 접힘] 버튼을 눌러 펼치세요";
+                eraCard.appendChild(msg);
+            }
+            container.appendChild(eraCard);
+        });
+        // 드래그 드롭 이벤트
+        container.addEventListener("dragover", (e) => e.preventDefault());
+        container.addEventListener("drop", (e) => {
+            e.preventDefault();
+            if(dragSource.type !== "era") return;
+            const targetCard = e.target.closest(".era-card");
+            if(!targetCard) return;
+            const targetId = targetCard.getAttribute("data-era-id");
+            if(!targetId || dragSource.eraId === targetId) return;
+            const srcIdx = timelineData.findIndex(e => e.id == dragSource.eraId);
+            const destIdx = timelineData.findIndex(e => e.id == targetId);
+            if(srcIdx === -1 || destIdx === -1) return;
+            const [removed] = timelineData.splice(srcIdx, 1);
+            timelineData.splice(destIdx, 0, removed);
+            syncAll();
+        });
+        // 이벤트 드롭
+        document.querySelectorAll(".event-list").forEach(containerEl => {
+            containerEl.addEventListener("dragover", (e) => e.preventDefault());
+            containerEl.addEventListener("drop", (e) => {
+                e.preventDefault();
+                if(dragSource.type !== "event") return;
+                const targetEvent = e.target.closest(".event-item");
+                if(!targetEvent) return;
+                const targetEraId = targetEvent.getAttribute("data-era-id");
+                const targetEventId = targetEvent.getAttribute("data-event-id");
+                if(!targetEraId || !targetEventId) return;
+                if(dragSource.eraId != targetEraId) return;
+                const srcEra = timelineData.find(e => e.id == dragSource.eraId);
+                if(!srcEra) return;
+                const srcIdx = srcEra.events.findIndex(ev => ev.id == dragSource.eventId);
+                const destIdx = srcEra.events.findIndex(ev => ev.id == targetEventId);
+                if(srcIdx === -1 || destIdx === -1) return;
+                const [moved] = srcEra.events.splice(srcIdx, 1);
+                srcEra.events.splice(destIdx, 0, moved);
+                syncAll();
+            });
+        });
+        generateToc();
+    }
+
+    function deleteEra(eraId) { timelineData = timelineData.filter(e => e.id != eraId); syncAll(); }
+    function deleteEvent(eraId, eventId) {
+        const era = timelineData.find(e => e.id == eraId);
+        if(era) era.events = era.events.filter(ev => ev.id != eventId);
+        syncAll();
+    }
+
+    // ------------------ 미리보기 (테마 + 사용자 색상 + 폰트) ------------------
+    function renderPreview() {
+        const previewDiv = document.getElementById("previewArea");
+        if(!previewDiv) return;
+        const styleId = "preview-style";
+        let styleEl = document.getElementById(styleId);
+        if(!styleEl) { styleEl = document.createElement("style"); styleEl.id = styleId; document.head.appendChild(styleEl); }
+        
+        const { bg, text, accent, cardBg, border } = customColors;
+        const titleEscaped = escapeHtml(timelineTitle);
+        const fontRule = getFontFaceRule();
+        const fontDeclare = getFontCSS();
+        let css = "";
+        if(currentTheme === "dcdata") {
+            css = `.preview-timeline{max-width:900px;margin:20px auto;background:${bg};padding:20px;border:1px solid ${border};color:${text};border-radius:16px; ${fontDeclare} }.preview-timeline .bat-header::before{content:"${titleEscaped}";display:block;margin-bottom:20px;font-weight:bold;}.preview-timeline .tl-year{border-left:2px solid ${border};padding-left:18px;margin-bottom:12px;}.preview-timeline .tl-year>summary{font-size:18px;font-weight:700;color:${accent};cursor:pointer;}.preview-timeline .tl-event{margin-left:15px;}.preview-timeline .event-detail{background:${cardBg};border-left:2px solid ${accent};padding:10px;margin:6px 0 12px 20px;color:${text};}`;
+        } else if(currentTheme === "minimal") {
+            css = `.preview-timeline{max-width:860px;margin:20px auto;background:${bg};color:${text};padding:20px;border-radius:24px; ${fontDeclare} }.preview-timeline .bat-header::before{content:"${titleEscaped}";font-size:1.8rem;font-weight:300;display:block;margin-bottom:20px;}.preview-timeline .tl-year{border-bottom:1px solid ${border};margin-bottom:20px;}.preview-timeline .tl-year>summary{font-size:1.6rem;font-weight:500;color:${accent};cursor:pointer;}.preview-timeline .tl-event{margin-left:24px;}.preview-timeline .event-detail{background:${cardBg};padding:10px;border-radius:16px;margin-top:8px;color:${text};}`;
+        } else if(currentTheme === "cute") {
+            css = `.preview-timeline{max-width:900px;margin:30px auto;font-family:'Comic Neue', 'Segoe UI Emoji', cursive;background:${bg};border-radius:48px;padding:28px 24px;border:1px solid ${border}; ${fontDeclare} }.preview-timeline .bat-header::before{content:"${titleEscaped}";font-size:22px;display:block;text-align:center;margin-bottom:20px;color:${accent};}.preview-timeline .tl-year{background:${cardBg};border-radius:60px;margin-bottom:24px;padding:8px 20px;border:1px solid ${border};}.preview-timeline .tl-year>summary{font-size:22px;font-weight:bold;color:${accent};cursor:pointer;list-style:none;display:flex;align-items:center;gap:6px;}.preview-timeline .tl-year>summary::-webkit-details-marker{display:none;}.preview-timeline .tl-year>summary::before{content:"🌸 ";}.preview-timeline .tl-year[open]>summary::before{content:"🎀 ";}.preview-timeline .tl-event{background:${cardBg};border-radius:40px;margin:12px 0 12px 20px;padding:6px 12px;}.preview-timeline .tl-event>summary{font-weight:600;color:${accent};cursor:pointer;list-style:none;padding:6px;}.preview-timeline .tl-event>summary::before{content:"✨ ";}.preview-timeline .event-detail{background:${bg};border-radius:28px;padding:12px 18px;margin:8px 8px 8px 28px;color:${text};border-left:6px solid ${accent};}`;
+        } else if(currentTheme === "gothic") {
+            css = `.preview-timeline{max-width:960px;margin:40px auto;background:${bg};padding:32px 28px;border:2px solid ${border};border-radius:24px;font-family:'Georgia', 'Times New Roman', serif;color:${text}; ${fontDeclare} }.preview-timeline .bat-header{text-align:center;margin-bottom:28px;font-size:22px;letter-spacing:4px;color:${accent};border-bottom:1px dashed ${border};padding-bottom:12px;}.preview-timeline .bat-header::before{content:"${titleEscaped}";}.preview-timeline .tl-year{background:${cardBg};border-radius:18px;margin-bottom:28px;border-left:8px solid ${accent};padding:10px 22px;}.preview-timeline .tl-year>summary{font-size:26px;font-weight:bold;color:${accent};cursor:pointer;list-style:none;display:flex;align-items:center;gap:12px;}.preview-timeline .tl-year>summary::-webkit-details-marker{display:none;}.preview-timeline .tl-year>summary::before{content:"🜟  ";}.preview-timeline .tl-year[open]>summary::before{content:"🜞  ";}.preview-timeline .tl-event{background:${cardBg};margin:16px 0 16px 24px;border-radius:30px;padding:2px 14px;border:1px solid ${border};}.preview-timeline .tl-event>summary{font-size:18px;font-weight:600;color:${accent};cursor:pointer;padding:10px 0;list-style:none;}.preview-timeline .tl-event>summary::before{content:"⚜️ ";}.preview-timeline .event-detail{background:${bg};border-radius:24px;padding:14px 22px;margin:4px 8px 14px 28px;color:${text};border-left:4px solid ${accent};}`;
+        }
+        if(darkModePreview && !["dcdata","gothic"].includes(currentTheme)) {
+            css = css.replace(/background:${bg}/g, "background:#121212").replace(/color:${text}/g, "color:#e0e0e0");
+        }
+        styleEl.innerHTML = (fontRule ? fontRule + "\n" : "") + css;
+        
+        let html = `<div class="preview-timeline"><div class="bat-header"></div>`;
+        timelineData.forEach(era => {
+            html += `<details class="tl-year" ${era.open ? "open" : ""}><summary>${escapeHtml(era.year)}</summary>`;
+            era.events.forEach(ev => {
+                html += `<details class="tl-event" ${ev.open ? "open" : ""}><summary><span class="event-title">${escapeHtml(ev.title)}</span></summary>`;
+                html += `<div class="event-detail">${escapeHtml(ev.content).replace(/\n/g,'<br>')}</div>`;
+                html += `</details>`;
+            });
+            html += `</details>`;
+        });
+        html += `</div>`;
+        previewDiv.innerHTML = html;
+    }
+
+    function escapeHtml(str) { return String(str).replace(/[&<>]/g, m => m==='&'?'&amp;':m==='<'?'&lt;':'&gt;'); }
     
-    // 초기 렌더
-    renderYearsEditor();
-    renderStickersEditor();
-    function escapeHtml(str) { if(!str) return ''; return str.replace(/[&<>]/g, function(m){ if(m==='&') return '&amp;'; if(m==='<') return '&lt;'; if(m==='>') return '&gt;'; return m;}); }
+    function generateToc() {
+        const tocDiv = document.getElementById("autoToc");
+        if(!tocDiv) return;
+        let html = `<span>📑 목차</span>`;
+        timelineData.forEach(era => {
+            html += `<a href="#" data-year="${escapeHtml(era.year)}">📅 ${escapeHtml(era.year)}</a>`;
+        });
+        tocDiv.innerHTML = html;
+        document.querySelectorAll(".toc-nav a").forEach(a => {
+            a.addEventListener("click", (e) => {
+                e.preventDefault();
+                const year = a.getAttribute("data-year");
+                const previewDiv = document.getElementById("previewArea");
+                const summaries = previewDiv.querySelectorAll(".tl-year > summary");
+                for(let s of summaries) if(s.innerText.includes(year)) { s.scrollIntoView({ behavior: "smooth", block: "center" }); break; }
+            });
+        });
+    }
+
+    function syncAll() { saveAll(); renderEditor(); renderPreview(); }
+
+    // ------------------ 내보내기 (폰트 포함) ------------------
+    function exportHtml() {
+        const dataCopy = JSON.parse(JSON.stringify(timelineData));
+        const title = timelineTitle;
+        const colors = customColors;
+        const theme = currentTheme;
+        const dark = darkModePreview;
+        const fontRule = getFontFaceRule();
+        const fontDeclare = getFontCSS();
+        const styleContent = getExportCss(theme, colors, dark, title, fontDeclare, fontRule);
+        let timelineHtml = `<div class="timeline-root">`;
+        dataCopy.forEach(era => {
+            timelineHtml += `<details class="year-item" ${era.open ? "open" : ""}><summary>${escapeHtml(era.year)}</summary>`;
+            era.events.forEach(ev => {
+                timelineHtml += `<details class="event-item" ${ev.open ? "open" : ""}><summary>${escapeHtml(ev.title)}</summary><div class="event-content">${escapeHtml(ev.content)}</div></details>`;
+            });
+            timelineHtml += `</details>`;
+        });
+        timelineHtml += `</div>`;
+        return `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${escapeHtml(title)}</title><style>${styleContent}</style></head><body>${timelineHtml}</body></html>`;
+    }
+    
+    function getExportCss(theme, colors, dark, title, fontDeclare, fontRule) {
+        const { bg, text, accent, cardBg, border } = colors;
+        let base = fontRule ? fontRule + "\n" : "";
+        if(theme === "cute") {
+            base += `.timeline-root{max-width:900px;margin:30px auto;font-family:'Comic Neue', cursive;background:${bg};border-radius:48px;padding:28px;border:1px solid ${border}; ${fontDeclare} }.timeline-root::before{content:"${escapeHtml(title)}";display:block;text-align:center;font-size:22px;margin-bottom:20px;color:${accent};}.year-item{background:${cardBg};border-radius:60px;margin-bottom:24px;padding:8px 20px;border:1px solid ${border};}.year-item>summary{font-size:22px;font-weight:bold;color:${accent};cursor:pointer;}.year-item>summary::before{content:"🌸 ";}.event-item{margin-left:20px;background:${cardBg};border-radius:40px;padding:6px 12px;}.event-item>summary{color:${accent};}.event-content{background:${bg};border-radius:28px;padding:12px;margin:8px 0 8px 28px;border-left:6px solid ${accent};color:${text};}`;
+        } else if(theme === "gothic") {
+            base += `.timeline-root{max-width:960px;margin:40px auto;background:${bg};padding:32px;border:2px solid ${border};border-radius:24px;font-family:Georgia, serif;color:${text}; ${fontDeclare} }.timeline-root::before{content:"${escapeHtml(title)}";display:block;text-align:center;font-size:22px;margin-bottom:28px;color:${accent};border-bottom:1px dashed ${border};padding-bottom:12px;}.year-item{background:${cardBg};border-radius:18px;margin-bottom:28px;border-left:8px solid ${accent};padding:10px 22px;}.year-item>summary{font-size:26px;font-weight:bold;color:${accent};}.year-item>summary::before{content:"🜟 ";}.event-item{margin-left:24px;background:${cardBg};border-radius:30px;padding:2px 14px;border:1px solid ${border};}.event-item>summary{font-size:18px;color:${accent};}.event-item>summary::before{content:"⚜️ ";}.event-content{background:${bg};border-radius:24px;padding:14px;margin:4px 8px 14px 28px;border-left:4px solid ${accent};color:${text};}`;
+        } else if(theme === "dcdata") {
+            base += `.timeline-root{background:${bg};color:${text};padding:20px; ${fontDeclare} }.timeline-root::before{content:"${escapeHtml(title)}";display:block;margin-bottom:20px;font-weight:bold;}.year-item{border-left:2px solid ${border};padding-left:18px;}.year-item>summary{color:${accent};}.event-content{background:${cardBg};border-left:2px solid ${accent};padding:10px;margin-left:20px;}`;
+        } else { // minimal
+            base += `.timeline-root{font-family:sans-serif;background:${bg};color:${text};padding:20px; ${fontDeclare} }.timeline-root::before{content:"${escapeHtml(title)}";font-size:1.5rem;display:block;margin-bottom:20px;}.year-item>summary{font-size:1.5rem;color:${accent};}.event-content{background:${cardBg};padding:8px;border-radius:16px;margin-left:24px;}`;
+        }
+        return base;
+    }
+
+    // ------------------ 이벤트 초기화 ------------------
+    window.onload = () => {
+        loadAll();
+        if(!timelineData.length) timelineData = defaultData();
+        syncAll();
+        
+        document.getElementById("timelineTitleInput").addEventListener("input", (e) => { timelineTitle = e.target.value; saveAll(); renderPreview(); });
+        document.getElementById("themeSelect").addEventListener("change", (e) => { currentTheme = e.target.value; applyDefaultColors(); syncAll(); });
+        document.getElementById("bgColorPicker").addEventListener("input", (e) => { customColors.bg = e.target.value; saveAll(); renderPreview(); });
+        document.getElementById("textColorPicker").addEventListener("input", (e) => { customColors.text = e.target.value; saveAll(); renderPreview(); });
+        document.getElementById("accentColorPicker").addEventListener("input", (e) => { customColors.accent = e.target.value; saveAll(); renderPreview(); });
+        document.getElementById("cardBgPicker").addEventListener("input", (e) => { customColors.cardBg = e.target.value; saveAll(); renderPreview(); });
+        document.getElementById("borderColorPicker").addEventListener("input", (e) => { customColors.border = e.target.value; saveAll(); renderPreview(); });
+        document.getElementById("resetColorsBtn").addEventListener("click", () => { applyDefaultColors(); syncAll(); });
+        document.getElementById("darkPreviewBtn").addEventListener("click", () => { darkModePreview = true; saveAll(); renderPreview(); });
+        document.getElementById("lightPreviewBtn").addEventListener("click", () => { darkModePreview = false; saveAll(); renderPreview(); });
+        document.getElementById("addEraBtn").addEventListener("click", () => { timelineData.push({ id: genId(), year: "새 시대", open: true, events: [] }); syncAll(); });
+        document.getElementById("exportHtmlBtn").addEventListener("click", () => { const blob = new Blob([exportHtml()], {type:"text/html"}); const a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download="timeline.html"; a.click(); URL.revokeObjectURL(blob); });
+        document.getElementById("copyHtmlBtn").addEventListener("click", async () => { await navigator.clipboard.writeText(exportHtml()); alert("HTML 코드가 복사되었습니다!"); });
+        document.getElementById("saveJsonBtn").addEventListener("click", () => { const blob = new Blob([JSON.stringify(timelineData,null,2)], {type:"application/json"}); const a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download="timeline.json"; a.click(); URL.revokeObjectURL(blob); });
+        document.getElementById("importJsonFile").addEventListener("change", (e) => { if(e.target.files[0]) { const reader = new FileReader(); reader.onload = (ev) => { try { const d=JSON.parse(ev.target.result); if(Array.isArray(d)) timelineData=d; syncAll(); } catch(err){alert("JSON 오류");} }; reader.readAsText(e.target.files[0]); } e.target.value=""; });
+        document.getElementById("resetDemoBtn").addEventListener("click", () => { timelineData = defaultData(); syncAll(); });
+        
+        // 폰트 관련 이벤트
+        const fontTypeSelect = document.getElementById("fontTypeSelect");
+        const customFontName = document.getElementById("customFontName");
+        const customFontUrl = document.getElementById("customFontUrl");
+        const loadExample = document.getElementById("loadExampleFont");
+        
+        fontTypeSelect.addEventListener("change", (e) => {
+            fontSettings.type = e.target.value;
+            syncFontUI();
+            saveAll();
+            renderPreview();
+        });
+        customFontName.addEventListener("input", (e) => {
+            fontSettings.customName = e.target.value;
+            saveAll();
+            renderPreview();
+        });
+        customFontUrl.addEventListener("input", (e) => {
+            fontSettings.customUrl = e.target.value;
+            saveAll();
+            renderPreview();
+        });
+        loadExample.addEventListener("click", () => {
+            fontSettings.type = "custom";
+            fontSettings.customName = "Mabiyet";
+            fontSettings.customUrl = "https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_2207-01@1.0/MabinogiClassicR.woff2";
+            syncFontUI();
+            saveAll();
+            renderPreview();
+            fontTypeSelect.value = "custom";
+            const panel = document.getElementById("customFontPanel");
+            panel.style.display = "flex";
+        });
+        syncFontUI();
+    };
 </script>
 </body>
 </html>
