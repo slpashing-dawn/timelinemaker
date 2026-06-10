@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>ChronoForge · 타임라인 스튜디오 </title>
+    <title>ChronoForge · 타임라인 스튜디오</title>
     <style>
         * {
             margin: 0;
@@ -298,7 +298,7 @@
     <div class="toolbar">
         <div class="tool-group">
             <span>📌 제목</span>
-            <input type="text" id="timelineTitleInput" placeholder="타임라인 제목" value="CHRONOLOGICAL ARCHIVE" style="border-radius:40px;padding:5px 12px;border:1px solid #cbd5e1;">
+            <input type="text" id="timelineTitleInput" placeholder="타임라인 제목" value="BATCOMPUTER/Archive/Timeline" style="border-radius:40px;padding:5px 12px;border:1px solid #cbd5e1;">
         </div>
         <div class="tool-group">
             <span>🎨 테마</span>
@@ -384,7 +384,7 @@
     let dragSource = { type: null, eraId: null, eventId: null };
 
     // 사용자 설정 (색상 + 폰트)
-    let timelineTitle = "CHRONOLOGICAL ARCHIVE";
+    let timelineTitle = "BATCOMPUTER/Archive/Timeline";
     let customColors = {
         bg: "#0d0f12",
         text: "#cfd7df",
@@ -406,16 +406,18 @@
     function genId() { return Date.now() + Math.random() * 10000 + (nextId++); }
 
     const defaultData = () => [
-        { id: genId(), year: "2010", open: true, events: [
-            { id: genId(), title: "첫 조우", content: "딕 그레이슨과 에이든, 어둠의 골목에서 운명처럼 만나다.", open: true, hasDetail: true },
-            { id: genId(), title: "타이탄즈 합류", content: "영웅으로서의 첫 발걸음, 팀과의 인연이 시작되다.", open: false, hasDetail: true }
+        { id: genId(), year: "Year 0", open: true, events: [
+            { id: genId(), title: "리처드 그레이슨 탄생", content: "", open: false, hasDetail: false },
+            { id: genId(), title: "에이든 나단 탄생", content: "", open: false, hasDetail: false }
         ] },
-        { id: genId(), year: "2015", open: true, events: [
-            { id: genId(), title: "블뤼드헤이븐 이주", content: "독립적인 활동을 위한 거처, 그림자와 함께.", open: false, hasDetail: true },
-            { id: genId(), title: "붉은 두건 사건", content: "제이슨 토드의 귀환, 과거와의 화해.", open: false, hasDetail: true }
+        { id: genId(), year: "Year 7", open: true, events: [
+            { id: genId(), title: "제이슨 토드 탄생", content: "", open: false, hasDetail: false },
+            { id: genId(), title: "카산드라 케인 탄생", content: "", open: false, hasDetail: false }
         ] },
-        { id: genId(), year: "2020", open: false, events: [
-            { id: genId(), title: "화해와 이해 (간단)", content: "", open: false, hasDetail: false }
+        { id: genId(), year: "Year 8", open: true, events: [
+            { id: genId(), title: "시어도어 노벨의 탄생", content: "", open: false, hasDetail: false },
+            { id: genId(), title: "배트맨과 로빈", content: "플라잉 그레이슨즈의 비극적인 사고 이후, 브루스 웨인은 리처드 그레이슨의 피보호자가 되었다. 이후 두 사람은 배트맨과 로빈으로서 함께 밤하늘을 누비게 된다.", open: true, hasDetail: true },
+            { id: genId(), title: "첫 만남", content: "로빈은 패트롤 중 내로우즈 인근에서 한 검은 후드의 소년을 만나게 된다. 로빈은 소년에게 도움의 손길을 내밀었지만, 소년은 떨떠름하게 받아들이고 말았다. 어떤 이유에서인지 두 사람은 이후에도 계속해 종종 마주치게 된다.", open: true, hasDetail: true }
         ] }
     ];
 
@@ -546,7 +548,7 @@
                     title = evSummary.innerText.trim();
                     let contentDiv = evEl.querySelector('.event-content, .event-detail');
                     if (contentDiv) content = contentDiv.innerText.trim();
-                    else hasDetail = false; // 만약 details 내부에 내용 div가 없으면 간단 사건으로 간주
+                    else hasDetail = false;
                 } else {
                     title = evEl.innerText.slice(0, 100).trim();
                     hasDetail = false;
@@ -567,7 +569,7 @@
             <div class="modal-content">
                 <h3>📄 HTML 붙여넣기</h3>
                 <p>기존에 내보낸 타임라인 HTML을 붙여넣으세요.<br>(지원: .year-item / .timeline-year / .tl-year)</p>
-                <textarea id="pasteHtmlArea" placeholder="<details class='year-item'><summary>2010</summary>..."></textarea>
+                <textarea id="pasteHtmlArea" placeholder="<details class='year-item'><summary>Year 0</summary>..."></textarea>
                 <div class="modal-buttons">
                     <button id="modalCancelBtn">취소</button>
                     <button id="modalImportBtn" class="primary">불러오기</button>
@@ -595,7 +597,7 @@
         };
     }
 
-    // ------------------ 편집기 렌더링 (hasDetail 토글 버튼 추가) ------------------
+    // ------------------ 편집기 렌더링 ------------------
     function renderEditor() {
         const container = document.getElementById("erasContainer");
         if(!container) return;
@@ -667,7 +669,6 @@
                     titleInput.className = "event-title-input";
                     titleInput.addEventListener("change", (e) => { ev.title = e.target.value; syncAll(); });
                     
-                    // content input (hasDetail이 true일 때만 표시)
                     let contentInput = null;
                     if (ev.hasDetail !== false) {
                         contentInput = document.createElement("input");
@@ -677,7 +678,6 @@
                         contentInput.placeholder = "사건 내용";
                         contentInput.addEventListener("change", (e) => { ev.content = e.target.value; syncAll(); });
                     } else {
-                        // 간단 모드일 때는 내용 입력 필드 없음 대신 텍스트 표시
                         const simpleHint = document.createElement("span");
                         simpleHint.textContent = "📌 간단 사건 (세부 내용 없음)";
                         simpleHint.style.fontSize = "12px";
@@ -730,7 +730,6 @@
             }
             container.appendChild(eraCard);
         });
-        // 드래그 드롭 이벤트 (생략, 기존과 동일)
         container.addEventListener("dragover", (e) => e.preventDefault());
         container.addEventListener("drop", (e) => {
             e.preventDefault();
@@ -777,7 +776,7 @@
         syncAll();
     }
 
-    // ------------------ 미리보기 (간단 사건 처리) ------------------
+    // ------------------ 미리보기 (dcdata 개선) ------------------
     function renderPreview() {
         const previewDiv = document.getElementById("previewArea");
         if(!previewDiv) return;
@@ -791,7 +790,17 @@
         const fontDeclare = getFontCSS();
         let css = "";
         if(currentTheme === "dcdata") {
-            css = `.preview-timeline{max-width:900px;margin:20px auto;background:${bg};padding:20px;border:1px solid ${border};color:${text};border-radius:16px; ${fontDeclare} }.preview-timeline .bat-header::before{content:"${titleEscaped}";display:block;margin-bottom:20px;font-weight:bold;}.preview-timeline .tl-year{border-left:2px solid ${border};padding-left:18px;margin-bottom:12px;}.preview-timeline .tl-year>summary{font-size:18px;font-weight:700;color:${accent};cursor:pointer;}.preview-timeline .tl-event{margin-left:15px;}.preview-timeline .event-detail{background:${eventBg};border-left:2px solid ${accent};padding:10px;margin:6px 0 12px 20px;color:${text};}.preview-timeline .simple-event{margin-left:20px;padding:4px 0;color:${text};opacity:0.9;list-style-type:circle;}`;
+            css = `
+                .preview-timeline{max-width:1000px;margin:20px auto;background:${bg};padding:20px;border:1px solid ${border};color:${text};border-radius:16px; ${fontDeclare} }
+                .preview-timeline .bat-header{display:none;}
+                .preview-timeline::before{content:"${titleEscaped}";display:block;margin-bottom:24px;font-weight:bold;font-size:2.2rem;letter-spacing:2px;color:${accent};}
+                .preview-timeline .tl-year{border-left:2px solid ${border};padding-left:18px;margin-bottom:16px;}
+                .preview-timeline .tl-year>summary{font-size:1.6rem;font-weight:bold;color:${accent};cursor:pointer;margin-bottom:8px;letter-spacing:1px;}
+                .preview-timeline .tl-event{margin-left:32px !important; margin-bottom:12px;}
+                .preview-timeline .event-detail{background:${eventBg};border-left:2px solid ${accent};padding:10px;margin:6px 0 12px 20px;color:${text};}
+                .preview-timeline .simple-event{margin-left:32px !important; padding:4px 0; font-size:0.95rem;}
+                .preview-timeline .tl-event>summary{color:${accent};}
+            `;
         } else if(currentTheme === "minimal") {
             css = `.preview-timeline{max-width:860px;margin:20px auto;background:${bg};color:${text};padding:20px;border-radius:24px; ${fontDeclare} }.preview-timeline .bat-header::before{content:"${titleEscaped}";font-size:1.8rem;font-weight:300;display:block;margin-bottom:20px;}.preview-timeline .tl-year{border-bottom:1px solid ${border};margin-bottom:20px;}.preview-timeline .tl-year>summary{font-size:1.6rem;font-weight:500;color:${accent};cursor:pointer;}.preview-timeline .tl-event{margin-left:24px;}.preview-timeline .event-detail{background:${eventBg};padding:10px;border-radius:16px;margin-top:8px;color:${text};}.preview-timeline .simple-event{margin-left:24px;padding:4px 0;color:${text};}`;
         } else if(currentTheme === "cute") {
@@ -811,7 +820,6 @@
             html += `<details class="tl-year" ${era.open ? "open" : ""}><summary>${escapeHtml(era.year)}</summary>`;
             era.events.forEach(ev => {
                 if (ev.hasDetail === false) {
-                    // 간단 사건: details 없이 제목만 표시
                     html += `<div class="simple-event">• ${escapeHtml(ev.title)}</div>`;
                 } else {
                     html += `<details class="tl-event" ${ev.open ? "open" : ""}><summary><span class="event-title">${escapeHtml(ev.title)}</span></summary>`;
@@ -848,7 +856,7 @@
 
     function syncAll() { saveAll(); renderEditor(); renderPreview(); }
 
-    // 내보내기 (간단 사건 처리)
+    // 내보내기 (dcdata 개선)
     function exportHtml() {
         const dataCopy = JSON.parse(JSON.stringify(timelineData));
         const title = timelineTitle;
@@ -882,7 +890,7 @@
         } else if(theme === "gothic") {
             base += `.timeline-root{max-width:960px;margin:40px auto;background:${bg};padding:32px;border:2px solid ${border};border-radius:24px;font-family:Georgia, serif;color:${text}; ${fontDeclare} }.timeline-root::before{content:"${escapeHtml(title)}";display:block;text-align:center;font-size:22px;margin-bottom:28px;color:${accent};border-bottom:1px dashed ${border};padding-bottom:12px;}.year-item{background:${cardBg};border-radius:18px;margin-bottom:28px;border-left:8px solid ${accent};padding:10px 22px;}.year-item>summary{font-size:26px;font-weight:bold;color:${accent};}.year-item>summary::before{content:"🜟 ";}.event-item{margin-left:24px;background:${cardBg};border-radius:30px;padding:2px 14px;border:1px solid ${border};}.event-item>summary{font-size:18px;color:${accent};}.event-item>summary::before{content:"⚜️ ";}.event-content{background:${eventBg};border-radius:24px;padding:14px;margin:4px 8px 14px 28px;border-left:4px solid ${accent};color:${text};}.simple-event-item{margin-left:28px;padding:8px 0;color:${text};}`;
         } else if(theme === "dcdata") {
-            base += `.timeline-root{background:${bg};color:${text};padding:20px; ${fontDeclare} }.timeline-root::before{content:"${escapeHtml(title)}";display:block;margin-bottom:20px;font-weight:bold;}.year-item{border-left:2px solid ${border};padding-left:18px;}.year-item>summary{color:${accent};}.event-content{background:${eventBg};border-left:2px solid ${accent};padding:10px;margin-left:20px;}.simple-event-item{margin-left:20px;padding:4px 0;}`;
+            base += `.timeline-root{background:${bg};color:${text};padding:20px; ${fontDeclare} }.timeline-root::before{content:"${escapeHtml(title)}";display:block;margin-bottom:24px;font-weight:bold;font-size:2.2rem;letter-spacing:2px;color:${accent};}.year-item{border-left:2px solid ${border};padding-left:18px;margin-bottom:16px;}.year-item>summary{color:${accent};font-size:1.6rem;font-weight:bold;cursor:pointer;margin-bottom:8px;letter-spacing:1px;}.event-item{margin-left:32px !important; margin-bottom:12px;}.event-content{background:${eventBg};border-left:2px solid ${accent};padding:10px;margin-left:20px;}.simple-event-item{margin-left:32px !important; padding:4px 0; font-size:0.95rem;}`;
         } else if(theme === "ffxiv") {
             base += `.timeline-root{max-width:1000px;margin:30px auto;background:${bg};padding:28px 32px;border:2px solid ${accent};border-radius:24px;font-family:'Palatino','Georgia',serif;color:${text}; ${fontDeclare} }.timeline-root::before{content:"✨ ${escapeHtml(title)} ✨";display:block;text-align:center;font-size:26px;font-weight:bold;margin-bottom:28px;color:${accent};border-bottom:2px solid ${accent};padding-bottom:8px;}.year-item{background:${cardBg};border-left:6px solid ${accent};margin-bottom:24px;border-radius:16px;padding:10px 20px;}.year-item>summary{font-size:24px;font-weight:bold;color:${accent};cursor:pointer;}.year-item>summary::before{content:"📜 ";}.year-item[open]>summary::before{content:"📖 ";}.event-item{background:rgba(0,0,0,0.25);margin:12px 0 12px 28px;border-radius:12px;padding:4px 16px;border-left:3px solid ${accent};}.event-item>summary{font-size:18px;font-weight:600;color:${accent};cursor:pointer;padding:8px 0;}.event-item>summary::before{content:"⚔️ ";}.event-item[open]>summary::before{content:"🏆 ";}.event-content{background:${eventBg};border-radius:14px;padding:12px 20px;margin:6px 0 12px 28px;color:${text};border-left:2px solid ${accent};}.simple-event-item{margin-left:32px;padding:6px 0;color:${accent};font-style:italic;}`;
         } else { // minimal
