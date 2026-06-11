@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>ChronoForge · 타임라인 스튜디오</title>
+    <title>ChronoForge · 타임라인 스튜디오 </title>
     <style>
         * {
             margin: 0;
@@ -287,10 +287,6 @@
             gap: 12px;
             justify-content: flex-end;
         }
-        .simple-event {
-            opacity: 0.9;
-            font-style: italic;
-        }
     </style>
 </head>
 <body>
@@ -347,7 +343,7 @@
             <button id="lightPreviewBtn">☀️ 라이트 모드</button>
             <button id="exportHtmlBtn" class="primary">📄 HTML 내보내기</button>
             <button id="copyHtmlBtn">📋 복사</button>
-            <button id="importHtmlBtn">📋 HTML 붙여넣기</button>
+            <button id="importHtmlBtn">📋 고급 HTML 붙여넣기</button>
         </div>
         <div class="tool-group">
             <button id="saveJsonBtn">💾 JSON 저장</button>
@@ -383,7 +379,6 @@
     let nextId = 100;
     let dragSource = { type: null, eraId: null, eventId: null };
 
-    // 사용자 설정 (색상 + 폰트)
     let timelineTitle = "BATCOMPUTER/Archive/Timeline";
     let customColors = {
         bg: "#0d0f12",
@@ -396,7 +391,6 @@
     let currentTheme = "dcdata";
     let darkModePreview = false;
 
-    // 폰트 설정
     let fontSettings = {
         type: "system",
         customName: "",
@@ -417,11 +411,10 @@
         { id: genId(), year: "Year 8", open: true, events: [
             { id: genId(), title: "시어도어 노벨의 탄생", content: "", open: false, hasDetail: false },
             { id: genId(), title: "배트맨과 로빈", content: "플라잉 그레이슨즈의 비극적인 사고 이후, 브루스 웨인은 리처드 그레이슨의 피보호자가 되었다. 이후 두 사람은 배트맨과 로빈으로서 함께 밤하늘을 누비게 된다.", open: true, hasDetail: true },
-            { id: genId(), title: "첫 만남", content: "로빈은 패트롤 중 내로우즈 인근에서 한 검은 후드의 소년을 만나게 된다. 로빈은 소년에게 도움의 손길을 내밀었지만, 소년은 떨떠름하게 받아들이고 말았다. 어떤 이유에서인지 두 사람은 이후에도 계속해 종종 마주치게 된다.", open: true, hasDetail: true }
+            { id: genId(), title: "첫 만남", content: "로빈은 패트롤 중 내로우즈 인근에서 한 검은 후드의 소년을 만나게 된다. 로빈은 소년에게 도움의 손길을 내밀었지만, 소년은 떨떠름하게 받아들이고 말았다.", open: true, hasDetail: true }
         ] }
     ];
 
-    // 테마별 기본 색상
     function getDefaultColors(theme) {
         switch(theme) {
             case "dcdata": return { bg:"#0d0f12", text:"#cfd7df", accent:"#7cc7ff", cardBg:"#13171d", eventBg:"#13171d", border:"#26313d" };
@@ -450,11 +443,7 @@
         const typeSelect = document.getElementById("fontTypeSelect");
         typeSelect.value = fontSettings.type;
         const customPanel = document.getElementById("customFontPanel");
-        if (fontSettings.type === "custom") {
-            customPanel.style.display = "flex";
-        } else {
-            customPanel.style.display = "none";
-        }
+        customPanel.style.display = fontSettings.type === "custom" ? "flex" : "none";
         document.getElementById("customFontName").value = fontSettings.customName;
         document.getElementById("customFontUrl").value = fontSettings.customUrl;
     }
@@ -512,7 +501,6 @@
                 syncFontUI();
             } catch(e) {}
         }
-        // migrate old events: add hasDetail if missing
         for (let era of timelineData) {
             for (let ev of era.events) {
                 if (ev.hasDetail === undefined) ev.hasDetail = true;
@@ -521,12 +509,43 @@
         if(!timelineData.length) timelineData = defaultData();
     }
 
-    // HTML 파싱
+    // ------------------ 고급 HTML 파싱 (제목, 폰트, 간단 사건 포함) ------------------
     function parseHtmlToTimeline(htmlString) {
         const parser = new DOMParser();
         const doc = parser.parseFromString(htmlString, 'text/html');
+        
+        // 1. 제목 추출 (CSS ::before 가상 요소)
+        let extractedTitle = null;
+        const styleNodes = doc.querySelectorAll('style');
+        for (let style of styleNodes) {
+            const css = style.textContent;
+            // .timeline-root::before content
+            let match = css.match(/\.timeline-root\s*::before\s*\{\s*content:\s*"([^"]+)"/i);
+            if (match) { extractedTitle = match[1]; break; }
+            // .preview-timeline .bat-header::before
+            if (!match) match = css.match(/\.bat-header\s*::before\s*\{\s*content:\s*"([^"]+)"/i);
+            if (match) { extractedTitle = match[1]; break; }
+        }
+        if (extractedTitle) timelineTitle = extractedTitle;
+        document.getElementById("timelineTitleInput").value = timelineTitle;
+        
+        // 2. 폰트 추출 (@font-face)
+        for (let style of styleNodes) {
+            const css = style.textContent;
+            const fontMatch = css.match(/@font-face\s*\{\s*font-family:\s*'([^']+)';\s*src:\s*url\('([^']+)'\)/i);
+            if (fontMatch) {
+                fontSettings.type = "custom";
+                fontSettings.customName = fontMatch[1];
+                fontSettings.customUrl = fontMatch[2];
+                syncFontUI();
+                break;
+            }
+        }
+        
+        // 3. 타임라인 데이터 파싱 (연도 및 사건)
         let yearElements = doc.querySelectorAll('.year-item, .timeline-year, .tl-year, .bat-year');
         if (yearElements.length === 0) throw new Error("지원되는 형식의 시대/사건을 찾을 수 없습니다.");
+        
         const newTimeline = [];
         for (let yearEl of yearElements) {
             let yearText = "";
@@ -538,26 +557,52 @@
                 else yearText = yearEl.innerText.slice(0, 50).trim();
             }
             const open = yearEl.hasAttribute('open');
-            let eventEls = yearEl.querySelectorAll('.event-item, .timeline-event, .tl-event');
             const events = [];
-            for (let evEl of eventEls) {
+            
+            // 일반 사건 (details.event-item, .tl-event)
+            const detailEvents = yearEl.querySelectorAll('.event-item, .tl-event');
+            for (let evEl of detailEvents) {
                 let title = "", content = "";
                 const evSummary = evEl.querySelector('summary');
-                let hasDetail = true;
                 if (evSummary) {
                     title = evSummary.innerText.trim();
                     let contentDiv = evEl.querySelector('.event-content, .event-detail');
                     if (contentDiv) content = contentDiv.innerText.trim();
-                    else hasDetail = false;
-                } else {
-                    title = evEl.innerText.slice(0, 100).trim();
-                    hasDetail = false;
                 }
                 const evOpen = evEl.hasAttribute('open');
-                events.push({ id: genId(), title: title || "제목 없음", content: content || "", open: evOpen, hasDetail: hasDetail });
+                events.push({
+                    id: genId(),
+                    title: title || "제목 없음",
+                    content: content || "",
+                    open: evOpen,
+                    hasDetail: true
+                });
             }
-            if (yearText) newTimeline.push({ id: genId(), year: yearText, open: open, events: events });
+            
+            // 간단 사건 (div.simple-event-item, .simple-event)
+            const simpleDivs = yearEl.querySelectorAll('.simple-event-item, .simple-event');
+            for (let div of simpleDivs) {
+                let title = div.innerText.trim();
+                if (title.startsWith('•')) title = title.substring(1).trim();
+                events.push({
+                    id: genId(),
+                    title: title || "간단 사건",
+                    content: "",
+                    open: false,
+                    hasDetail: false
+                });
+            }
+            
+            if (yearText) {
+                newTimeline.push({
+                    id: genId(),
+                    year: yearText,
+                    open: open,
+                    events: events
+                });
+            }
         }
+        
         if (newTimeline.length === 0) throw new Error("파싱 결과 없음");
         return newTimeline;
     }
@@ -567,9 +612,9 @@
         modalDiv.className = 'modal';
         modalDiv.innerHTML = `
             <div class="modal-content">
-                <h3>📄 HTML 붙여넣기</h3>
-                <p>기존에 내보낸 타임라인 HTML을 붙여넣으세요.<br>(지원: .year-item / .timeline-year / .tl-year)</p>
-                <textarea id="pasteHtmlArea" placeholder="<details class='year-item'><summary>Year 0</summary>..."></textarea>
+                <h3>📄 고급 HTML 붙여넣기</h3>
+                <p>타임라인 제목, 폰트, 간단 사건까지 모두 인식합니다.</p>
+                <textarea id="pasteHtmlArea" placeholder="<div class='timeline-root'>...</div>" style="width:100%; height:300px; font-family:monospace; padding:12px; border-radius:16px;"></textarea>
                 <div class="modal-buttons">
                     <button id="modalCancelBtn">취소</button>
                     <button id="modalImportBtn" class="primary">불러오기</button>
@@ -590,14 +635,14 @@
                 if (parsed.length) {
                     timelineData = parsed;
                     syncAll();
-                    alert(`성공적으로 ${parsed.length}개의 시대를 불러왔습니다.`);
+                    alert(`✅ 성공! ${parsed.length}개의 시대를 불러왔습니다.\n제목과 폰트도 함께 적용되었습니다.`);
                     closeModal();
                 } else alert("파싱 결과가 없습니다.");
             } catch (err) { alert("파싱 오류: " + err.message); }
         };
     }
 
-    // ------------------ 편집기 렌더링 ------------------
+    // ------------------ 편집기 렌더링 (기존과 동일) ------------------
     function renderEditor() {
         const container = document.getElementById("erasContainer");
         if(!container) return;
@@ -689,7 +734,6 @@
                     const toggleDetailBtn = document.createElement("button");
                     toggleDetailBtn.textContent = ev.hasDetail ? "📄 상세" : "📝 간단";
                     toggleDetailBtn.className = "small-btn";
-                    toggleDetailBtn.title = "세부 내용 표시 전환";
                     toggleDetailBtn.onclick = () => {
                         ev.hasDetail = !ev.hasDetail;
                         if (ev.hasDetail && !ev.content) ev.content = "내용을 입력하세요";
@@ -776,7 +820,7 @@
         syncAll();
     }
 
-    // ------------------ 미리보기 (dcdata 개선) ------------------
+    // ------------------ 미리보기 (dcdata 개선 유지) ------------------
     function renderPreview() {
         const previewDiv = document.getElementById("previewArea");
         if(!previewDiv) return;
@@ -856,16 +900,15 @@
 
     function syncAll() { saveAll(); renderEditor(); renderPreview(); }
 
-    // 내보내기 (dcdata 개선)
+    // 내보내기 (기존과 동일)
     function exportHtml() {
         const dataCopy = JSON.parse(JSON.stringify(timelineData));
         const title = timelineTitle;
         const colors = customColors;
         const theme = currentTheme;
-        const dark = darkModePreview;
         const fontRule = getFontFaceRule();
         const fontDeclare = getFontCSS();
-        const styleContent = getExportCss(theme, colors, dark, title, fontDeclare, fontRule);
+        const styleContent = getExportCss(theme, colors, title, fontDeclare, fontRule);
         let timelineHtml = `<div class="timeline-root">`;
         dataCopy.forEach(era => {
             timelineHtml += `<details class="year-item" ${era.open ? "open" : ""}><summary>${escapeHtml(era.year)}</summary>`;
@@ -882,7 +925,7 @@
         return `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${escapeHtml(title)}</title><style>${styleContent}</style></head><body>${timelineHtml}</body></html>`;
     }
     
-    function getExportCss(theme, colors, dark, title, fontDeclare, fontRule) {
+    function getExportCss(theme, colors, title, fontDeclare, fontRule) {
         const { bg, text, accent, cardBg, eventBg, border } = colors;
         let base = fontRule ? fontRule + "\n" : "";
         if(theme === "cute") {
@@ -924,7 +967,6 @@
         document.getElementById("resetDemoBtn").addEventListener("click", () => { timelineData = defaultData(); syncAll(); });
         document.getElementById("importHtmlBtn").addEventListener("click", () => { showHtmlImportModal(); });
         
-        // 폰트 이벤트
         const fontTypeSelect = document.getElementById("fontTypeSelect");
         const customFontName = document.getElementById("customFontName");
         const customFontUrl = document.getElementById("customFontUrl");
