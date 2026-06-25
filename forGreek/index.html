@@ -1,0 +1,1110 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>ChronoForge · 타임라인 스튜디오</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #eef2f5;
+            font-family: system-ui, -apple-system, 'Segoe UI', 'Inter', 'Roboto', sans-serif;
+            padding: 20px;
+        }
+
+        .app-container {
+            max-width: 1600px;
+            margin: 0 auto;
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 10px 30px -10px rgba(0,0,0,0.05);
+            overflow: hidden;
+        }
+
+        .toolbar {
+            background: #f8fafc;
+            padding: 16px 24px;
+            border-bottom: 1px solid #e2e8f0;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .tool-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            align-items: center;
+            background: #fff;
+            padding: 6px 14px;
+            border-radius: 4px;
+            border: 1px solid #e2edf2;
+        }
+
+        button, .btn-like {
+            background: #ffffff;
+            border: 1px solid #cbd5e1;
+            padding: 6px 14px;
+            border-radius: 4px;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: 0.2s;
+            font-family: inherit;
+        }
+        button:hover {
+            background: #f1f5f9;
+            border-color: #94a3b8;
+        }
+        button.primary {
+            background: #1e293b;
+            border-color: #1e293b;
+            color: white;
+        }
+        button.primary:hover {
+            background: #0f172a;
+        }
+        select, input[type="color"], input[type="text"] {
+            border-radius: 4px;
+            border: 1px solid #cbd5e1;
+            padding: 5px 12px;
+            font-size: 13px;
+            background: white;
+            cursor: pointer;
+        }
+        .color-label, .font-label {
+            font-size: 12px;
+            font-weight: 500;
+            background: #f1f5f9;
+            padding: 2px 8px;
+            border-radius: 4px;
+        }
+
+        .split-layout {
+            display: flex;
+            flex-wrap: wrap;
+        }
+        .editor-panel {
+            flex: 1.2;
+            min-width: 280px;
+            background: #ffffff;
+            border-right: 1px solid #e9edf2;
+            padding: 20px;
+            max-height: 75vh;
+            overflow-y: auto;
+        }
+        .preview-panel {
+            flex: 2;
+            background: #fefefe;
+            padding: 20px;
+            max-height: 75vh;
+            overflow-y: auto;
+        }
+
+        .era-card {
+            background: #f9fbfd;
+            border: 1px solid #e4e9f0;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            padding: 12px 14px;
+        }
+        .era-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 12px;
+            flex-wrap: wrap;
+        }
+        .drag-handle-era {
+            cursor: grab;
+            font-size: 18px;
+            padding: 4px;
+            user-select: none;
+            color: #7c8ba0;
+        }
+        .drag-handle-era:active { cursor: grabbing; }
+        .era-title-input {
+            font-weight: bold;
+            font-size: 1.2rem;
+            border: 1px solid transparent;
+            background: transparent;
+            padding: 4px 8px;
+            border-radius: 4px;
+            width: 140px;
+        }
+        .era-title-input:focus {
+            border-color: #b9c8e8;
+            background: white;
+            outline: none;
+        }
+        .era-actions {
+            margin-left: auto;
+            display: flex;
+            gap: 6px;
+        }
+        .event-list {
+            margin-left: 28px;
+            margin-top: 8px;
+        }
+        .event-item {
+            background: white;
+            border-left: 3px solid #cbdbe0;
+            border-radius: 4px;
+            padding: 8px 12px;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        .drag-handle-event {
+            cursor: grab;
+            font-size: 16px;
+            color: #8b9abb;
+        }
+        .drag-handle-event:active { cursor: grabbing; }
+        .event-title-input {
+            font-weight: 600;
+            border: 1px solid #e2e8f0;
+            background: #fff;
+            border-radius: 4px;
+            padding: 4px 12px;
+            width: 160px;
+        }
+        .event-content-input {
+            flex: 2;
+            min-width: 180px;
+            border: 1px solid #e2e8f0;
+            background: #fff;
+            border-radius: 4px;
+            padding: 4px 12px;
+        }
+        .small-btn {
+            background: none;
+            border: 1px solid #e2e8f0;
+            font-size: 12px;
+            cursor: pointer;
+            padding: 4px 8px;
+            border-radius: 4px;
+        }
+        .small-btn:hover { background: #eef2ff; border-color: #cbd5e1; }
+        .add-event-btn {
+            margin-top: 8px;
+            margin-left: 28px;
+            background: #ecfdf5;
+            border: 1px solid #b3e0cf;
+            font-size: 12px;
+        }
+        .add-era-btn {
+            width: 100%;
+            margin-top: 16px;
+            background: #f1f5f9;
+        }
+        .collapsed-message {
+            margin-left: 28px;
+            padding: 12px;
+            color: #7f8c8d;
+            font-size: 13px;
+            background: #f8fafc;
+            border-radius: 4px;
+            text-align: center;
+        }
+        @media (max-width: 780px) {
+            .split-layout { flex-direction: column; }
+            .editor-panel, .preview-panel { max-height: 60vh; }
+        }
+        .toc-nav {
+            background: #f1f5f9;
+            border-radius: 4px;
+            padding: 12px;
+            margin-bottom: 20px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+        .toc-nav a {
+            text-decoration: none;
+            color: #2c3e66;
+            background: white;
+            padding: 4px 12px;
+            border-radius: 4px;
+            border: 1px solid #dce5ef;
+            font-size: 13px;
+        }
+        .color-custom-details, .font-custom-details {
+            background: #f0f4fa;
+            border-radius: 4px;
+            padding: 8px 12px;
+            margin-top: 4px;
+        }
+        .color-custom-details summary, .font-custom-details summary {
+            font-weight: 500;
+            cursor: pointer;
+            list-style: none;
+            font-size: 13px;
+        }
+        .color-custom-details summary::-webkit-details-marker, .font-custom-details summary::-webkit-details-marker { display: none; }
+        
+        .modal {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+        .modal-content {
+            background: white;
+            border-radius: 8px;
+            max-width: 700px;
+            width: 90%;
+            padding: 24px;
+            box-shadow: 0 20px 30px rgba(0,0,0,0.2);
+        }
+        .modal-content textarea {
+            width: 100%;
+            height: 300px;
+            font-family: monospace;
+            padding: 12px;
+            border-radius: 4px;
+            border: 1px solid #ccc;
+            margin: 15px 0;
+        }
+        .modal-buttons {
+            display: flex;
+            gap: 12px;
+            justify-content: flex-end;
+        }
+    </style>
+</head>
+<body>
+<div class="app-container">
+    <div class="toolbar">
+        <div class="tool-group">
+            <span>제목</span>
+            <input type="text" id="timelineTitleInput" placeholder="타임라인 제목" value="BATCOMPUTER/Archive/Timeline" style="border-radius:4px;padding:5px 12px;border:1px solid #cbd5e1;">
+        </div>
+        <div class="tool-group">
+            <span>테마</span>
+            <select id="themeSelect">
+                <option value="mythology">고전 기하학 (밝은 황금빛)</option>
+                <option value="dcdata">다크 데이터파일</option>
+                <option value="minimal">미니멀 클린</option>
+                <option value="cute">페어리 테일</option>
+                <option value="gothic">고딕 앤틱</option>
+                <option value="ffxiv">판타지 퀘스트</option>
+            </select>
+            <details class="color-custom-details">
+                <summary>컬러 커스텀</summary>
+                <div style="display:flex;flex-wrap:wrap;gap:12px;margin-top:12px;">
+                    <div><span class="color-label">배경</span> <input type="color" id="bgColorPicker"></div>
+                    <div><span class="color-label">텍스트</span> <input type="color" id="textColorPicker"></div>
+                    <div><span class="color-label">강조선</span> <input type="color" id="accentColorPicker"></div>
+                    <div><span class="color-label">상자 배경</span> <input type="color" id="cardBgPicker"></div>
+                    <div><span class="color-label">내용 배경</span> <input type="color" id="eventBgPicker"></div>
+                    <div><span class="color-label">테두리</span> <input type="color" id="borderColorPicker"></div>
+                </div>
+                <button id="resetColorsBtn" style="margin-top:8px; font-size:12px;">테마 기본 색상</button>
+            </details>
+            <details class="font-custom-details">
+                <summary>폰트 설정</summary>
+                <div style="margin-top:12px;">
+                    <div style="margin-bottom:8px;">
+                        <select id="fontTypeSelect">
+                            <option value="system">시스템 기본 폰트</option>
+                            <option value="serif">세리프 (Serif)</option>
+                            <option value="sans">산세리프 (Sans-serif)</option>
+                            <option value="mono">모노스페이스 (Monospace)</option>
+                            <option value="custom">사용자 정의 웹폰트</option>
+                        </select>
+                    </div>
+                    <div id="customFontPanel" style="display:none; flex-wrap:wrap; gap:8px; align-items:center; margin-top:6px;">
+                        <input type="text" id="customFontName" placeholder="폰트 이름 (예: Mabiyet)" style="flex:1; min-width:120px;">
+                        <input type="text" id="customFontUrl" placeholder="웹폰트 URL (woff2)" style="flex:2; min-width:180px;">
+                        <button id="loadExampleFont" type="button" style="font-size:12px;">예제 폰트 로드</button>
+                    </div>
+                    <div style="font-size:12px; margin-top:8px; color:#5a6e8a;">※ 사용자 정의 시 @font-face 자동 생성</div>
+                </div>
+            </details>
+        </div>
+        <div class="tool-group">
+            <button id="darkPreviewBtn">다크 모드</button>
+            <button id="lightPreviewBtn">라이트 모드</button>
+            <button id="exportHtmlBtn" class="primary">HTML 내보내기</button>
+            <button id="copyHtmlBtn">복사</button>
+            <button id="importHtmlBtn">고급 HTML 붙여넣기</button>
+        </div>
+        <div class="tool-group">
+            <button id="saveJsonBtn">JSON 저장</button>
+            <label for="importJsonFile" class="btn-like">JSON 불러오기</label>
+            <input type="file" id="importJsonFile" accept=".json" style="display:none">
+            <button id="resetDemoBtn">기본 예제</button>
+        </div>
+    </div>
+
+    <div class="split-layout">
+        <div class="editor-panel" id="editorPanel">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 12px;">
+                <strong>시대 & 사건 편집기</strong>
+                <span style="font-size:12px; color:#64748b;">드래그 정렬</span>
+            </div>
+            <div id="erasContainer"></div>
+            <button id="addEraBtn" class="add-era-btn">새로운 시대 추가</button>
+            <div class="toc-nav" id="autoToc" style="margin-top: 24px;"></div>
+        </div>
+        <div class="preview-panel" id="previewPanel">
+            <div style="display:flex; justify-content:space-between; margin-bottom:12px;">
+                <strong>타임라인 미리보기</strong>
+                <span id="autoSaveStatus" style="font-size:11px;">자동 저장됨</span>
+            </div>
+            <div id="previewArea" class="preview-wrapper"></div>
+        </div>
+    </div>
+</div>
+
+<script>
+    let timelineData = [];
+    let nextId = 100;
+    let dragSource = { type: null, eraId: null, eventId: null };
+
+    let timelineTitle = "BATCOMPUTER/Archive/Timeline";
+    let customColors = {
+        bg: "#fcfbf9",
+        text: "#2b3031",
+        accent: "#cda434",
+        cardBg: "#ffffff",
+        eventBg: "#fcfbf9",
+        border: "#e8e1d5"
+    };
+    let currentTheme = "mythology";
+    let darkModePreview = false;
+
+    let fontSettings = {
+        type: "serif",
+        customName: "",
+        customUrl: ""
+    };
+
+    function genId() { return Date.now() + Math.random() * 10000 + (nextId++); }
+
+    const defaultData = () => [
+        { id: genId(), year: "Year 0", open: true, events: [
+            { id: genId(), title: "리처드 그레이슨 탄생", content: "", open: false, hasDetail: false },
+            { id: genId(), title: "에이든 나단 탄생", content: "", open: false, hasDetail: false }
+        ] },
+        { id: genId(), year: "Year 7", open: true, events: [
+            { id: genId(), title: "제이슨 토드 탄생", content: "", open: false, hasDetail: false },
+            { id: genId(), title: "카산드라 케인 탄생", content: "", open: false, hasDetail: false }
+        ] },
+        { id: genId(), year: "Year 8", open: true, events: [
+            { id: genId(), title: "시어도어 노벨의 탄생", content: "", open: false, hasDetail: false },
+            { id: genId(), title: "배트맨과 로빈", content: "플라잉 그레이슨즈의 비극적인 사고 이후, 브루스 웨인은 리처드 그레이슨의 피보호자가 되었다. 이후 두 사람은 배트맨과 로빈으로서 함께 밤하늘을 누비게 된다.", open: true, hasDetail: true },
+            { id: genId(), title: "첫 만남", content: "로빈은 패트롤 중 내로우즈 인근에서 한 검은 후드의 소년을 만나게 된다. 로빈은 소년에게 도움의 손길을 내밀었지만, 소년은 떨떠름하게 받아들이고 말았다.", open: true, hasDetail: true }
+        ] }
+    ];
+
+    function getDefaultColors(theme) {
+        switch(theme) {
+            case "dcdata": return { bg:"#0d0f12", text:"#cfd7df", accent:"#7cc7ff", cardBg:"#13171d", eventBg:"#13171d", border:"#26313d" };
+            case "minimal": return { bg:"#ffffff", text:"#1f2a3e", accent:"#4f7ea0", cardBg:"#f8faff", eventBg:"#f8faff", border:"#e4e9f2" };
+            case "cute": return { bg:"#fff9fb", text:"#5e3a46", accent:"#f4a2b6", cardBg:"#ffffffd9", eventBg:"#fff9fb", border:"#ffdee8" };
+            case "gothic": return { bg:"#1c171d", text:"#ece2e8", accent:"#b87c9f", cardBg:"#2c212b", eventBg:"#1c171d", border:"#6b4e5e" };
+            case "ffxiv": return { bg:"#0e1116", text:"#e9e5d9", accent:"#c9ac6e", cardBg:"#1b1f28", eventBg:"#0e1116", border:"#7a6a4b" };
+            case "mythology": return { bg:"#fcfbf9", text:"#2b3031", accent:"#cda434", cardBg:"#ffffff", eventBg:"#fcfbf9", border:"#e8e1d5" };
+            default: return { bg:"#fcfbf9", text:"#2b3031", accent:"#cda434", cardBg:"#ffffff", eventBg:"#fcfbf9", border:"#e8e1d5" };
+        }
+    }
+
+    function applyDefaultColors() {
+        const def = getDefaultColors(currentTheme);
+        customColors = { ...def };
+        document.getElementById("bgColorPicker").value = customColors.bg;
+        document.getElementById("textColorPicker").value = customColors.text;
+        document.getElementById("accentColorPicker").value = customColors.accent;
+        document.getElementById("cardBgPicker").value = customColors.cardBg;
+        document.getElementById("eventBgPicker").value = customColors.eventBg;
+        document.getElementById("borderColorPicker").value = customColors.border;
+        renderPreview();
+        saveAll();
+    }
+
+    function syncFontUI() {
+        const typeSelect = document.getElementById("fontTypeSelect");
+        typeSelect.value = fontSettings.type;
+        const customPanel = document.getElementById("customFontPanel");
+        customPanel.style.display = fontSettings.type === "custom" ? "flex" : "none";
+        document.getElementById("customFontName").value = fontSettings.customName;
+        document.getElementById("customFontUrl").value = fontSettings.customUrl;
+    }
+
+    function getFontCSS() {
+        if (fontSettings.type === "system") return "";
+        if (fontSettings.type === "serif") return "font-family: Georgia, 'Times New Roman', serif;";
+        if (fontSettings.type === "sans") return "font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;";
+        if (fontSettings.type === "mono") return "font-family: 'Courier New', Consolas, monospace;";
+        if (fontSettings.type === "custom" && fontSettings.customName && fontSettings.customUrl) {
+            return `font-family: '${fontSettings.customName}', fallback, sans-serif;`;
+        }
+        return "";
+    }
+
+    function getFontFaceRule() {
+        if (fontSettings.type === "custom" && fontSettings.customName && fontSettings.customUrl) {
+            return `@font-face { font-family: '${fontSettings.customName}'; src: url('${fontSettings.customUrl}') format('woff2'); font-weight: normal; font-display: swap; }`;
+        }
+        return "";
+    }
+
+    function saveAll() {
+        try {
+            localStorage.setItem("chronotimeline_data", JSON.stringify(timelineData));
+            const settings = { timelineTitle, customColors, currentTheme, darkModePreview, fontSettings };
+            localStorage.setItem("chronotimeline_settings", JSON.stringify(settings));
+            document.getElementById("autoSaveStatus").innerHTML = "저장 완료 " + new Date().toLocaleTimeString();
+            setTimeout(() => { if(document.getElementById("autoSaveStatus")) document.getElementById("autoSaveStatus").innerHTML = "자동 저장됨"; }, 1500);
+        } catch(e) {}
+    }
+
+    function loadAll() {
+        const dataRaw = localStorage.getItem("chronotimeline_data");
+        if(dataRaw) {
+            try { const parsed = JSON.parse(dataRaw); if(Array.isArray(parsed)) timelineData = parsed; } catch(e) {}
+        }
+        const settingsRaw = localStorage.getItem("chronotimeline_settings");
+        if(settingsRaw) {
+            try {
+                const s = JSON.parse(settingsRaw);
+                if(s.timelineTitle) timelineTitle = s.timelineTitle;
+                if(s.customColors) customColors = { ...getDefaultColors(currentTheme), ...s.customColors };
+                if(s.currentTheme) currentTheme = s.currentTheme;
+                if(s.darkModePreview !== undefined) darkModePreview = s.darkModePreview;
+                if(s.fontSettings) fontSettings = s.fontSettings;
+                document.getElementById("timelineTitleInput").value = timelineTitle;
+                document.getElementById("themeSelect").value = currentTheme;
+                document.getElementById("bgColorPicker").value = customColors.bg;
+                document.getElementById("textColorPicker").value = customColors.text;
+                document.getElementById("accentColorPicker").value = customColors.accent;
+                document.getElementById("cardBgPicker").value = customColors.cardBg;
+                document.getElementById("eventBgPicker").value = customColors.eventBg || customColors.cardBg;
+                document.getElementById("borderColorPicker").value = customColors.border;
+                syncFontUI();
+            } catch(e) {}
+        }
+        for (let era of timelineData) {
+            for (let ev of era.events) {
+                if (ev.hasDetail === undefined) ev.hasDetail = true;
+            }
+        }
+        if(!timelineData.length) timelineData = defaultData();
+    }
+
+    function parseHtmlToTimeline(htmlString) {
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(htmlString, 'text/html');
+        
+        let extractedTitle = null;
+        const styleNodes = doc.querySelectorAll('style');
+        for (let style of styleNodes) {
+            const css = style.textContent;
+            let match = css.match(/\.timeline-root\s*::before\s*\{\s*content:\s*"([^"]+)"/i);
+            if (match) { extractedTitle = match[1]; break; }
+            if (!match) match = css.match(/\.bat-header\s*::before\s*\{\s*content:\s*"([^"]+)"/i);
+            if (match) { extractedTitle = match[1]; break; }
+        }
+        if (extractedTitle) timelineTitle = extractedTitle;
+        document.getElementById("timelineTitleInput").value = timelineTitle;
+        
+        for (let style of styleNodes) {
+            const css = style.textContent;
+            const fontMatch = css.match(/@font-face\s*\{\s*font-family:\s*'([^']+)';\s*src:\s*url\('([^']+)'\)/i);
+            if (fontMatch) {
+                fontSettings.type = "custom";
+                fontSettings.customName = fontMatch[1];
+                fontSettings.customUrl = fontMatch[2];
+                syncFontUI();
+                break;
+            }
+        }
+        
+        let yearElements = doc.querySelectorAll('.year-item, .timeline-year, .tl-year, .bat-year');
+        if (yearElements.length === 0) throw new Error("지원되는 형식의 시대/사건을 찾을 수 없습니다.");
+        
+        const newTimeline = [];
+        for (let yearEl of yearElements) {
+            let yearText = "";
+            const summary = yearEl.querySelector('summary');
+            if (summary) yearText = summary.innerText.trim();
+            else {
+                const firstChild = yearEl.firstChild;
+                if (firstChild && firstChild.nodeType === Node.TEXT_NODE) yearText = firstChild.textContent.trim();
+                else yearText = yearEl.innerText.slice(0, 50).trim();
+            }
+            const open = yearEl.hasAttribute('open');
+            const events = [];
+            
+            const detailEvents = yearEl.querySelectorAll('.event-item, .tl-event');
+            for (let evEl of detailEvents) {
+                let title = "", content = "";
+                const evSummary = evEl.querySelector('summary');
+                if (evSummary) {
+                    title = evSummary.innerText.trim();
+                    let contentDiv = evEl.querySelector('.event-content, .event-detail');
+                    if (contentDiv) content = contentDiv.innerText.trim();
+                }
+                const evOpen = evEl.hasAttribute('open');
+                events.push({
+                    id: genId(),
+                    title: title || "제목 없음",
+                    content: content || "",
+                    open: evOpen,
+                    hasDetail: true
+                });
+            }
+            
+            const simpleDivs = yearEl.querySelectorAll('.simple-event-item, .simple-event');
+            for (let div of simpleDivs) {
+                let title = div.innerText.trim();
+                if (title.startsWith('•')) title = title.substring(1).trim();
+                events.push({
+                    id: genId(),
+                    title: title || "간단 사건",
+                    content: "",
+                    open: false,
+                    hasDetail: false
+                });
+            }
+            
+            if (yearText) {
+                newTimeline.push({
+                    id: genId(),
+                    year: yearText,
+                    open: open,
+                    events: events
+                });
+            }
+        }
+        
+        if (newTimeline.length === 0) throw new Error("파싱 결과 없음");
+        return newTimeline;
+    }
+
+    function showHtmlImportModal() {
+        const modalDiv = document.createElement('div');
+        modalDiv.className = 'modal';
+        modalDiv.innerHTML = `
+            <div class="modal-content">
+                <h3>고급 HTML 붙여넣기</h3>
+                <p>타임라인 제목, 폰트, 간단 사건까지 모두 인식합니다.</p>
+                <textarea id="pasteHtmlArea" placeholder="<div class='timeline-root'>...</div>" style="width:100%; height:300px; font-family:monospace; padding:12px; border-radius:4px;"></textarea>
+                <div class="modal-buttons">
+                    <button id="modalCancelBtn">취소</button>
+                    <button id="modalImportBtn" class="primary">불러오기</button>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(modalDiv);
+        const textarea = modalDiv.querySelector('#pasteHtmlArea');
+        const cancelBtn = modalDiv.querySelector('#modalCancelBtn');
+        const importBtn = modalDiv.querySelector('#modalImportBtn');
+        const closeModal = () => modalDiv.remove();
+        cancelBtn.onclick = closeModal;
+        importBtn.onclick = () => {
+            const html = textarea.value.trim();
+            if (!html) { alert("HTML 코드를 입력해주세요."); return; }
+            try {
+                const parsed = parseHtmlToTimeline(html);
+                if (parsed.length) {
+                    timelineData = parsed;
+                    syncAll();
+                    alert(`성공. ${parsed.length}개의 시대를 불러왔습니다.`);
+                    closeModal();
+                } else alert("파싱 결과가 없습니다.");
+            } catch (err) { alert("파싱 오류: " + err.message); }
+        };
+    }
+
+    function renderEditor() {
+        const container = document.getElementById("erasContainer");
+        if(!container) return;
+        container.innerHTML = "";
+        timelineData.forEach((era, idx) => {
+            const eraCard = document.createElement("div");
+            eraCard.className = "era-card";
+            eraCard.setAttribute("data-era-id", era.id);
+            const headerDiv = document.createElement("div");
+            headerDiv.className = "era-header";
+            const dragHandle = document.createElement("span");
+            dragHandle.innerHTML = "⋮⋮";
+            dragHandle.className = "drag-handle-era";
+            dragHandle.setAttribute("draggable", "true");
+            dragHandle.setAttribute("data-era-id", era.id);
+            dragHandle.addEventListener("dragstart", (e) => {
+                dragSource = { type: "era", eraId: era.id };
+                e.dataTransfer.setData("text/plain", era.id);
+            });
+            dragHandle.addEventListener("dragend", () => { dragSource = { type: null }; });
+            
+            const yearInput = document.createElement("input");
+            yearInput.type = "text";
+            yearInput.value = era.year;
+            yearInput.className = "era-title-input";
+            yearInput.addEventListener("change", (e) => { era.year = e.target.value; syncAll(); });
+            
+            const actionsDiv = document.createElement("div");
+            actionsDiv.className = "era-actions";
+            const toggleOpenBtn = document.createElement("button");
+            toggleOpenBtn.textContent = era.open ? "펼침" : "접힘";
+            toggleOpenBtn.className = "small-btn";
+            toggleOpenBtn.onclick = () => { era.open = !era.open; syncAll(); };
+            const delBtn = document.createElement("button");
+            delBtn.textContent = "삭제";
+            delBtn.className = "small-btn";
+            delBtn.onclick = () => { deleteEra(era.id); };
+            actionsDiv.appendChild(toggleOpenBtn);
+            actionsDiv.appendChild(delBtn);
+            headerDiv.appendChild(dragHandle);
+            headerDiv.appendChild(yearInput);
+            headerDiv.appendChild(actionsDiv);
+            eraCard.appendChild(headerDiv);
+            
+            if (era.open) {
+                const eventListDiv = document.createElement("div");
+                eventListDiv.className = "event-list";
+                eventListDiv.setAttribute("data-era-id", era.id);
+                era.events.forEach((ev, evIdx) => {
+                    const eventDiv = document.createElement("div");
+                    eventDiv.className = "event-item";
+                    eventDiv.setAttribute("data-event-id", ev.id);
+                    eventDiv.setAttribute("data-era-id", era.id);
+                    const dragEventHandle = document.createElement("span");
+                    dragEventHandle.innerHTML = "⠿";
+                    dragEventHandle.className = "drag-handle-event";
+                    dragEventHandle.setAttribute("draggable", "true");
+                    dragEventHandle.setAttribute("data-era-id", era.id);
+                    dragEventHandle.setAttribute("data-event-id", ev.id);
+                    dragEventHandle.addEventListener("dragstart", (e) => {
+                        dragSource = { type: "event", eraId: era.id, eventId: ev.id };
+                        e.dataTransfer.setData("text/plain", `${era.id}|${ev.id}`);
+                    });
+                    dragEventHandle.addEventListener("dragend", () => { dragSource = { type: null }; });
+                    
+                    const titleInput = document.createElement("input");
+                    titleInput.type = "text";
+                    titleInput.value = ev.title;
+                    titleInput.className = "event-title-input";
+                    titleInput.addEventListener("change", (e) => { ev.title = e.target.value; syncAll(); });
+                    
+                    let contentInput = null;
+                    if (ev.hasDetail !== false) {
+                        contentInput = document.createElement("input");
+                        contentInput.type = "text";
+                        contentInput.value = ev.content;
+                        contentInput.className = "event-content-input";
+                        contentInput.placeholder = "사건 내용";
+                        contentInput.addEventListener("change", (e) => { ev.content = e.target.value; syncAll(); });
+                    } else {
+                        const simpleHint = document.createElement("span");
+                        simpleHint.textContent = "간단 사건";
+                        simpleHint.style.fontSize = "12px";
+                        simpleHint.style.color = "#8b9abb";
+                        simpleHint.style.marginLeft = "8px";
+                        eventDiv.appendChild(simpleHint);
+                    }
+                    
+                    const toggleDetailBtn = document.createElement("button");
+                    toggleDetailBtn.textContent = ev.hasDetail ? "상세" : "간단";
+                    toggleDetailBtn.className = "small-btn";
+                    toggleDetailBtn.onclick = () => {
+                        ev.hasDetail = !ev.hasDetail;
+                        if (ev.hasDetail && !ev.content) ev.content = "내용을 입력하세요";
+                        syncAll();
+                    };
+                    
+                    const toggleEventBtn = document.createElement("button");
+                    toggleEventBtn.textContent = ev.open ? "접기" : "열기";
+                    toggleEventBtn.className = "small-btn";
+                    toggleEventBtn.onclick = () => { ev.open = !ev.open; syncAll(); };
+                    const delEventBtn = document.createElement("button");
+                    delEventBtn.textContent = "X";
+                    delEventBtn.className = "small-btn";
+                    delEventBtn.onclick = () => { deleteEvent(era.id, ev.id); };
+                    
+                    eventDiv.appendChild(dragEventHandle);
+                    eventDiv.appendChild(titleInput);
+                    if (contentInput) eventDiv.appendChild(contentInput);
+                    eventDiv.appendChild(toggleDetailBtn);
+                    eventDiv.appendChild(toggleEventBtn);
+                    eventDiv.appendChild(delEventBtn);
+                    eventListDiv.appendChild(eventDiv);
+                });
+                const addEventButton = document.createElement("button");
+                addEventButton.textContent = "새 사건 추가";
+                addEventButton.className = "add-event-btn";
+                addEventButton.onclick = () => {
+                    era.events.push({ id: genId(), title: "새로운 기록", content: "내용을 입력하세요", open: true, hasDetail: true });
+                    syncAll();
+                };
+                eventListDiv.appendChild(addEventButton);
+                eraCard.appendChild(eventListDiv);
+            } else {
+                const msg = document.createElement("div");
+                msg.className = "collapsed-message";
+                msg.innerHTML = "이 시대는 접혀있습니다.";
+                eraCard.appendChild(msg);
+            }
+            container.appendChild(eraCard);
+        });
+        container.addEventListener("dragover", (e) => e.preventDefault());
+        container.addEventListener("drop", (e) => {
+            e.preventDefault();
+            if(dragSource.type !== "era") return;
+            const targetCard = e.target.closest(".era-card");
+            if(!targetCard) return;
+            const targetId = targetCard.getAttribute("data-era-id");
+            if(!targetId || dragSource.eraId === targetId) return;
+            const srcIdx = timelineData.findIndex(e => e.id == dragSource.eraId);
+            const destIdx = timelineData.findIndex(e => e.id == targetId);
+            if(srcIdx === -1 || destIdx === -1) return;
+            const [removed] = timelineData.splice(srcIdx, 1);
+            timelineData.splice(destIdx, 0, removed);
+            syncAll();
+        });
+        document.querySelectorAll(".event-list").forEach(containerEl => {
+            containerEl.addEventListener("dragover", (e) => e.preventDefault());
+            containerEl.addEventListener("drop", (e) => {
+                e.preventDefault();
+                if(dragSource.type !== "event") return;
+                const targetEvent = e.target.closest(".event-item");
+                if(!targetEvent) return;
+                const targetEraId = targetEvent.getAttribute("data-era-id");
+                const targetEventId = targetEvent.getAttribute("data-event-id");
+                if(!targetEraId || !targetEventId) return;
+                if(dragSource.eraId != targetEraId) return;
+                const srcEra = timelineData.find(e => e.id == dragSource.eraId);
+                if(!srcEra) return;
+                const srcIdx = srcEra.events.findIndex(ev => ev.id == dragSource.eventId);
+                const destIdx = srcEra.events.findIndex(ev => ev.id == targetEventId);
+                if(srcIdx === -1 || destIdx === -1) return;
+                const [moved] = srcEra.events.splice(srcIdx, 1);
+                srcEra.events.splice(destIdx, 0, moved);
+                syncAll();
+            });
+        });
+        generateToc();
+    }
+
+    function deleteEra(eraId) { timelineData = timelineData.filter(e => e.id != eraId); syncAll(); }
+    function deleteEvent(eraId, eventId) {
+        const era = timelineData.find(e => e.id == eraId);
+        if(era) era.events = era.events.filter(ev => ev.id != eventId);
+        syncAll();
+    }
+
+    function renderPreview() {
+        const previewDiv = document.getElementById("previewArea");
+        if(!previewDiv) return;
+        const styleId = "preview-style";
+        let styleEl = document.getElementById(styleId);
+        if(!styleEl) { styleEl = document.createElement("style"); styleEl.id = styleId; document.head.appendChild(styleEl); }
+        
+        const { bg, text, accent, cardBg, eventBg, border } = customColors;
+        const titleEscaped = escapeHtml(timelineTitle);
+        const fontRule = getFontFaceRule();
+        const fontDeclare = getFontCSS();
+        let css = "";
+        
+        if(currentTheme === "mythology") {
+            css = `
+                .preview-timeline {
+                    max-width: 900px;
+                    margin: 40px auto;
+                    background: ${bg};
+                    padding: 60px 100px 60px 60px;
+                    position: relative;
+                    font-family: 'Georgia', 'Times New Roman', serif;
+                    color: ${text};
+                    overflow: hidden;
+                    border: 1px solid ${border};
+                    ${fontDeclare}
+                }
+                .preview-timeline .bat-header {
+                    position: absolute;
+                    right: 30px;
+                    top: 40px;
+                    writing-mode: vertical-rl;
+                    text-orientation: mixed;
+                    font-size: 3.5rem;
+                    font-weight: 300;
+                    letter-spacing: 0.3em;
+                    color: ${accent};
+                    opacity: 0.15;
+                    pointer-events: none;
+                    text-transform: uppercase;
+                    margin: 0;
+                    border: none;
+                }
+                .preview-timeline .bat-header::before {
+                    content: "${titleEscaped}";
+                }
+                .preview-timeline .tl-year {
+                    position: relative;
+                    margin-bottom: 60px;
+                    border-left: 1px solid ${accent};
+                    padding-left: 30px;
+                    padding-bottom: 20px;
+                }
+                .preview-timeline .tl-year > summary {
+                    font-size: 2.2rem;
+                    font-weight: normal;
+                    color: ${text};
+                    cursor: pointer;
+                    list-style: none;
+                    position: relative;
+                    top: -15px;
+                    left: -36px;
+                    display: flex;
+                    align-items: center;
+                    background: ${bg};
+                    width: fit-content;
+                    padding-right: 15px;
+                }
+                .preview-timeline .tl-year > summary::-webkit-details-marker { display: none; }
+                .preview-timeline .tl-year > summary::before {
+                    content: "";
+                    display: block;
+                    width: 11px;
+                    height: 11px;
+                    background: ${bg};
+                    border: 1px solid ${accent};
+                    border-radius: 50%;
+                    margin-right: 15px;
+                }
+                .preview-timeline .tl-event {
+                    position: relative;
+                    margin: 0 0 40px 20px;
+                    padding: 25px 0 0 25px;
+                    border-top: 1px solid ${accent};
+                    border-left: 1px solid ${accent};
+                }
+                .preview-timeline .tl-event::before {
+                    content: "";
+                    position: absolute;
+                    top: -5px;
+                    left: -5px;
+                    width: 9px;
+                    height: 9px;
+                    background: ${bg};
+                    border: 1px solid ${accent};
+                    border-radius: 50%;
+                }
+                .preview-timeline .tl-event > summary {
+                    font-size: 1.1rem;
+                    font-weight: normal;
+                    letter-spacing: 1px;
+                    color: ${text};
+                    cursor: pointer;
+                    list-style: none;
+                    position: absolute;
+                    top: -12px;
+                    left: 20px;
+                    background: ${bg};
+                    padding: 0 10px;
+                }
+                .preview-timeline .tl-event > summary::-webkit-details-marker { display: none; }
+                .preview-timeline .event-detail {
+                    background: ${cardBg};
+                    border: 1px solid ${accent};
+                    padding: 25px;
+                    margin-top: 15px;
+                    color: ${text};
+                    font-size: 0.95rem;
+                    line-height: 1.8;
+                    max-width: 85%;
+                    box-shadow: 6px 6px 0px ${border};
+                }
+                .preview-timeline .simple-event {
+                    margin: 20px 0 20px 20px;
+                    padding-left: 25px;
+                    color: ${text};
+                    position: relative;
+                }
+                .preview-timeline .simple-event::before {
+                    content: "";
+                    position: absolute;
+                    left: 0;
+                    top: 50%;
+                    width: 15px;
+                    height: 1px;
+                    background: ${accent};
+                }
+            `;
+        } else if(currentTheme === "dcdata") {
+            css = `.preview-timeline{max-width:1000px;margin:20px auto;background:${bg};padding:20px;border:1px solid ${border};color:${text};border-radius:16px; ${fontDeclare} }.preview-timeline .bat-header{display:none;}.preview-timeline::before{content:"${titleEscaped}";display:block;margin-bottom:24px;font-weight:bold;font-size:2.2rem;letter-spacing:2px;color:${accent};}.preview-timeline .tl-year{border-left:2px solid ${border};padding-left:18px;margin-bottom:16px;}.preview-timeline .tl-year>summary{font-size:1.6rem;font-weight:bold;color:${accent};cursor:pointer;margin-bottom:8px;letter-spacing:1px;}.preview-timeline .tl-event{margin-left:32px !important; margin-bottom:12px;}.preview-timeline .event-detail{background:${eventBg};border-left:2px solid ${accent};padding:10px;margin:6px 0 12px 20px;color:${text};}.preview-timeline .simple-event{margin-left:32px !important; padding:4px 0; font-size:0.95rem;}.preview-timeline .tl-event>summary{color:${accent};}`;
+        } else if(currentTheme === "minimal") {
+            css = `.preview-timeline{max-width:860px;margin:20px auto;background:${bg};color:${text};padding:20px;border-radius:24px; ${fontDeclare} }.preview-timeline .bat-header::before{content:"${titleEscaped}";font-size:1.8rem;font-weight:300;display:block;margin-bottom:20px;}.preview-timeline .tl-year{border-bottom:1px solid ${border};margin-bottom:20px;}.preview-timeline .tl-year>summary{font-size:1.6rem;font-weight:500;color:${accent};cursor:pointer;}.preview-timeline .tl-event{margin-left:24px;}.preview-timeline .event-detail{background:${eventBg};padding:10px;border-radius:16px;margin-top:8px;color:${text};}.preview-timeline .simple-event{margin-left:24px;padding:4px 0;color:${text};}`;
+        } else if(currentTheme === "cute") {
+            css = `.preview-timeline{max-width:900px;margin:30px auto;font-family:'Comic Neue', 'Segoe UI Emoji', cursive;background:${bg};border-radius:48px;padding:28px 24px;border:1px solid ${border}; ${fontDeclare} }.preview-timeline .bat-header::before{content:"${titleEscaped}";font-size:22px;display:block;text-align:center;margin-bottom:20px;color:${accent};}.preview-timeline .tl-year{background:${cardBg};border-radius:60px;margin-bottom:24px;padding:8px 20px;border:1px solid ${border};}.preview-timeline .tl-year>summary{font-size:22px;font-weight:bold;color:${accent};cursor:pointer;list-style:none;display:flex;align-items:center;gap:6px;}.preview-timeline .tl-year>summary::-webkit-details-marker{display:none;}.preview-timeline .tl-event{background:${cardBg};border-radius:40px;margin:12px 0 12px 20px;padding:6px 12px;}.preview-timeline .tl-event>summary{font-weight:600;color:${accent};cursor:pointer;list-style:none;padding:6px;}.preview-timeline .event-detail{background:${eventBg};border-radius:28px;padding:12px 18px;margin:8px 8px 8px 28px;color:${text};border-left:6px solid ${accent};}.preview-timeline .simple-event{margin-left:28px;padding:6px 0;color:${text};}`;
+        } else if(currentTheme === "gothic") {
+            css = `.preview-timeline{max-width:960px;margin:40px auto;background:${bg};padding:32px 28px;border:2px solid ${border};border-radius:24px;font-family:'Georgia', 'Times New Roman', serif;color:${text}; ${fontDeclare} }.preview-timeline .bat-header{text-align:center;margin-bottom:28px;font-size:22px;letter-spacing:4px;color:${accent};border-bottom:1px dashed ${border};padding-bottom:12px;}.preview-timeline .bat-header::before{content:"${titleEscaped}";}.preview-timeline .tl-year{background:${cardBg};border-radius:18px;margin-bottom:28px;border-left:8px solid ${accent};padding:10px 22px;}.preview-timeline .tl-year>summary{font-size:26px;font-weight:bold;color:${accent};cursor:pointer;list-style:none;display:flex;align-items:center;gap:12px;}.preview-timeline .tl-year>summary::-webkit-details-marker{display:none;}.preview-timeline .tl-event{background:${cardBg};margin:16px 0 16px 24px;border-radius:30px;padding:2px 14px;border:1px solid ${border};}.preview-timeline .tl-event>summary{font-size:18px;font-weight:600;color:${accent};cursor:pointer;padding:10px 0;list-style:none;}.preview-timeline .event-detail{background:${eventBg};border-radius:24px;padding:14px 22px;margin:4px 8px 14px 28px;color:${text};border-left:4px solid ${accent};}.preview-timeline .simple-event{margin-left:28px;padding:8px 0;color:${text};font-style:italic;}`;
+        } else if(currentTheme === "ffxiv") {
+            css = `.preview-timeline{max-width:1000px;margin:30px auto;background:${bg};padding:28px 32px;border:2px solid ${accent};border-radius:24px;box-shadow:0 8px 20px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.05);font-family:'Palatino', 'Georgia', 'Times New Roman', serif;color:${text}; ${fontDeclare} }.preview-timeline .bat-header{text-align:center;margin-bottom:32px;font-size:26px;font-weight:bold;text-transform:uppercase;letter-spacing:3px;color:${accent};text-shadow:0 1px 2px black;border-bottom:2px solid ${accent};display:inline-block;width:auto;padding-bottom:8px;}.preview-timeline .bat-header::before{content:"${titleEscaped}";}.preview-timeline .tl-year{background:${cardBg};border-left:6px solid ${accent};margin-bottom:24px;border-radius:16px;padding:10px 20px;transition:0.1s;}.preview-timeline .tl-year>summary{font-size:24px;font-weight:bold;color:${accent};cursor:pointer;list-style:none;display:flex;align-items:center;gap:12px;}.preview-timeline .tl-year>summary::-webkit-details-marker{display:none;}.preview-timeline .tl-event{background:rgba(0,0,0,0.25);margin:12px 0 12px 28px;border-radius:12px;padding:4px 16px;border-left:3px solid ${accent};backdrop-filter:blur(2px);}.preview-timeline .tl-event>summary{font-size:18px;font-weight:600;color:${accent};cursor:pointer;padding:8px 0;list-style:none;}.preview-timeline .tl-event>summary::-webkit-details-marker{display:none;}.preview-timeline .event-detail{background:${eventBg};border-radius:14px;padding:12px 20px;margin:6px 0 12px 28px;color:${text};border-left:2px solid ${accent};font-size:14px;line-height:1.5;box-shadow:inset 0 0 8px rgba(0,0,0,0.2);}.preview-timeline .simple-event{margin-left:32px;padding:6px 0;color:${accent};font-style:italic;}`;
+        }
+        
+        if(darkModePreview && !["dcdata","gothic","ffxiv","mythology"].includes(currentTheme)) {
+            css = css.replace(/background:${bg}/g, "background:#121212").replace(/color:${text}/g, "color:#e0e0e0");
+        }
+        styleEl.innerHTML = (fontRule ? fontRule + "\n" : "") + css;
+        
+        let html = `<div class="preview-timeline"><div class="bat-header"></div>`;
+        timelineData.forEach(era => {
+            html += `<details class="tl-year" ${era.open ? "open" : ""}><summary>${escapeHtml(era.year)}</summary>`;
+            era.events.forEach(ev => {
+                if (ev.hasDetail === false) {
+                    html += `<div class="simple-event">${escapeHtml(ev.title)}</div>`;
+                } else {
+                    html += `<details class="tl-event" ${ev.open ? "open" : ""}><summary><span class="event-title">${escapeHtml(ev.title)}</span></summary>`;
+                    html += `<div class="event-detail">${escapeHtml(ev.content).replace(/\n/g,'<br>')}</div>`;
+                    html += `</details>`;
+                }
+            });
+            html += `</details>`;
+        });
+        html += `</div>`;
+        previewDiv.innerHTML = html;
+    }
+
+    function escapeHtml(str) { return String(str).replace(/[&<>]/g, m => m==='&'?'&amp;':m==='<'?'&lt;':'&gt;'); }
+    
+    function generateToc() {
+        const tocDiv = document.getElementById("autoToc");
+        if(!tocDiv) return;
+        let html = `<span style="font-weight:600;">목차</span>`;
+        timelineData.forEach(era => {
+            html += `<a href="#" data-year="${escapeHtml(era.year)}">${escapeHtml(era.year)}</a>`;
+        });
+        tocDiv.innerHTML = html;
+        document.querySelectorAll(".toc-nav a").forEach(a => {
+            a.addEventListener("click", (e) => {
+                e.preventDefault();
+                const year = a.getAttribute("data-year");
+                const previewDiv = document.getElementById("previewArea");
+                const summaries = previewDiv.querySelectorAll(".tl-year > summary");
+                for(let s of summaries) if(s.innerText.includes(year)) { s.scrollIntoView({ behavior: "smooth", block: "center" }); break; }
+            });
+        });
+    }
+
+    function syncAll() { saveAll(); renderEditor(); renderPreview(); }
+
+    function exportHtml() {
+        const dataCopy = JSON.parse(JSON.stringify(timelineData));
+        const title = timelineTitle;
+        const colors = customColors;
+        const theme = currentTheme;
+        const fontRule = getFontFaceRule();
+        const fontDeclare = getFontCSS();
+        const styleContent = getExportCss(theme, colors, title, fontDeclare, fontRule);
+        let timelineHtml = `<div class="timeline-root"><div class="bat-header"></div>`;
+        dataCopy.forEach(era => {
+            timelineHtml += `<details class="year-item tl-year" ${era.open ? "open" : ""}><summary>${escapeHtml(era.year)}</summary>`;
+            era.events.forEach(ev => {
+                if (ev.hasDetail === false) {
+                    timelineHtml += `<div class="simple-event-item simple-event">${escapeHtml(ev.title)}</div>`;
+                } else {
+                    timelineHtml += `<details class="event-item tl-event" ${ev.open ? "open" : ""}><summary>${escapeHtml(ev.title)}</summary><div class="event-content event-detail">${escapeHtml(ev.content)}</div></details>`;
+                }
+            });
+            timelineHtml += `</details>`;
+        });
+        timelineHtml += `</div>`;
+        return `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${escapeHtml(title)}</title><style>${styleContent}</style></head><body>${timelineHtml}</body></html>`;
+    }
+    
+    function getExportCss(theme, colors, title, fontDeclare, fontRule) {
+        const { bg, text, accent, cardBg, eventBg, border } = colors;
+        let base = fontRule ? fontRule + "\n" : "";
+        if(theme === "mythology") {
+            base += `body { background: #f4f2ec; } .timeline-root { max-width: 900px; margin: 40px auto; background: ${bg}; padding: 60px 100px 60px 60px; position: relative; font-family: 'Georgia', 'Times New Roman', serif; color: ${text}; overflow: hidden; border: 1px solid ${border}; ${fontDeclare} } .timeline-root .bat-header { position: absolute; right: 30px; top: 40px; writing-mode: vertical-rl; text-orientation: mixed; font-size: 3.5rem; font-weight: 300; letter-spacing: 0.3em; color: ${accent}; opacity: 0.15; pointer-events: none; text-transform: uppercase; margin: 0; } .timeline-root .bat-header::before { content: "${escapeHtml(title)}"; } .year-item { position: relative; margin-bottom: 60px; border-left: 1px solid ${accent}; padding-left: 30px; padding-bottom: 20px; } .year-item > summary { font-size: 2.2rem; font-weight: normal; color: ${text}; cursor: pointer; list-style: none; position: relative; top: -15px; left: -36px; display: flex; align-items: center; background: ${bg}; width: fit-content; padding-right: 15px; } .year-item > summary::-webkit-details-marker { display: none; } .year-item > summary::before { content: ""; display: block; width: 11px; height: 11px; background: ${bg}; border: 1px solid ${accent}; border-radius: 50%; margin-right: 15px; } .event-item { position: relative; margin: 0 0 40px 20px; padding: 25px 0 0 25px; border-top: 1px solid ${accent}; border-left: 1px solid ${accent}; } .event-item::before { content: ""; position: absolute; top: -5px; left: -5px; width: 9px; height: 9px; background: ${bg}; border: 1px solid ${accent}; border-radius: 50%; } .event-item > summary { font-size: 1.1rem; font-weight: normal; letter-spacing: 1px; color: ${text}; cursor: pointer; list-style: none; position: absolute; top: -12px; left: 20px; background: ${bg}; padding: 0 10px; } .event-item > summary::-webkit-details-marker { display: none; } .event-content { background: ${cardBg}; border: 1px solid ${accent}; padding: 25px; margin-top: 15px; color: ${text}; font-size: 0.95rem; line-height: 1.8; max-width: 85%; box-shadow: 6px 6px 0px ${border}; } .simple-event-item { margin: 20px 0 20px 20px; padding-left: 25px; color: ${text}; position: relative; } .simple-event-item::before { content: ""; position: absolute; left: 0; top: 50%; width: 15px; height: 1px; background: ${accent}; }`;
+        } else if(theme === "cute") {
+            base += `.timeline-root{max-width:900px;margin:30px auto;font-family:'Comic Neue', cursive;background:${bg};border-radius:48px;padding:28px;border:1px solid ${border}; ${fontDeclare} }.timeline-root::before{content:"${escapeHtml(title)}";display:block;text-align:center;font-size:22px;margin-bottom:20px;color:${accent};}.year-item{background:${cardBg};border-radius:60px;margin-bottom:24px;padding:8px 20px;border:1px solid ${border};}.year-item>summary{font-size:22px;font-weight:bold;color:${accent};cursor:pointer;}.event-item{margin-left:20px;background:${cardBg};border-radius:40px;padding:6px 12px;}.event-item>summary{color:${accent};}.event-content{background:${eventBg};border-radius:28px;padding:12px;margin:8px 0 8px 28px;border-left:6px solid ${accent};color:${text};}.simple-event-item{margin-left:28px;padding:6px 0;color:${text};}`;
+        } else if(theme === "gothic") {
+            base += `.timeline-root{max-width:960px;margin:40px auto;background:${bg};padding:32px;border:2px solid ${border};border-radius:24px;font-family:Georgia, serif;color:${text}; ${fontDeclare} }.timeline-root::before{content:"${escapeHtml(title)}";display:block;text-align:center;font-size:22px;margin-bottom:28px;color:${accent};border-bottom:1px dashed ${border};padding-bottom:12px;}.year-item{background:${cardBg};border-radius:18px;margin-bottom:28px;border-left:8px solid ${accent};padding:10px 22px;}.year-item>summary{font-size:26px;font-weight:bold;color:${accent};}.event-item{margin-left:24px;background:${cardBg};border-radius:30px;padding:2px 14px;border:1px solid ${border};}.event-item>summary{font-size:18px;color:${accent};}.event-content{background:${eventBg};border-radius:24px;padding:14px;margin:4px 8px 14px 28px;border-left:4px solid ${accent};color:${text};}.simple-event-item{margin-left:28px;padding:8px 0;color:${text};}`;
+        } else if(theme === "dcdata") {
+            base += `.timeline-root{background:${bg};color:${text};padding:20px; ${fontDeclare} }.timeline-root::before{content:"${escapeHtml(title)}";display:block;margin-bottom:24px;font-weight:bold;font-size:2.2rem;letter-spacing:2px;color:${accent};}.year-item{border-left:2px solid ${border};padding-left:18px;margin-bottom:16px;}.year-item>summary{color:${accent};font-size:1.6rem;font-weight:bold;cursor:pointer;margin-bottom:8px;letter-spacing:1px;}.event-item{margin-left:32px !important; margin-bottom:12px;}.event-content{background:${eventBg};border-left:2px solid ${accent};padding:10px;margin-left:20px;}.simple-event-item{margin-left:32px !important; padding:4px 0; font-size:0.95rem;}`;
+        } else if(theme === "ffxiv") {
+            base += `.timeline-root{max-width:1000px;margin:30px auto;background:${bg};padding:28px 32px;border:2px solid ${accent};border-radius:24px;font-family:'Palatino','Georgia',serif;color:${text}; ${fontDeclare} }.timeline-root::before{content:"${escapeHtml(title)}";display:block;text-align:center;font-size:26px;font-weight:bold;margin-bottom:28px;color:${accent};border-bottom:2px solid ${accent};padding-bottom:8px;}.year-item{background:${cardBg};border-left:6px solid ${accent};margin-bottom:24px;border-radius:16px;padding:10px 20px;}.year-item>summary{font-size:24px;font-weight:bold;color:${accent};cursor:pointer;}.event-item{background:rgba(0,0,0,0.25);margin:12px 0 12px 28px;border-radius:12px;padding:4px 16px;border-left:3px solid ${accent};}.event-item>summary{font-size:18px;font-weight:600;color:${accent};cursor:pointer;padding:8px 0;}.event-content{background:${eventBg};border-radius:14px;padding:12px 20px;margin:6px 0 12px 28px;color:${text};border-left:2px solid ${accent};}.simple-event-item{margin-left:32px;padding:6px 0;color:${accent};font-style:italic;}`;
+        } else {
+            base += `.timeline-root{font-family:sans-serif;background:${bg};color:${text};padding:20px; ${fontDeclare} }.timeline-root::before{content:"${escapeHtml(title)}";font-size:1.5rem;display:block;margin-bottom:20px;}.year-item>summary{font-size:1.5rem;color:${accent};}.event-content{background:${eventBg};padding:8px;border-radius:16px;margin-left:24px;}.simple-event-item{margin-left:24px;padding:4px 0;}`;
+        }
+        return base;
+    }
+
+    window.onload = () => {
+        loadAll();
+        if(!timelineData.length) timelineData = defaultData();
+        syncAll();
+        
+        document.getElementById("timelineTitleInput").addEventListener("input", (e) => { timelineTitle = e.target.value; saveAll(); renderPreview(); });
+        document.getElementById("themeSelect").addEventListener("change", (e) => { currentTheme = e.target.value; applyDefaultColors(); syncAll(); });
+        document.getElementById("bgColorPicker").addEventListener("input", (e) => { customColors.bg = e.target.value; saveAll(); renderPreview(); });
+        document.getElementById("textColorPicker").addEventListener("input", (e) => { customColors.text = e.target.value; saveAll(); renderPreview(); });
+        document.getElementById("accentColorPicker").addEventListener("input", (e) => { customColors.accent = e.target.value; saveAll(); renderPreview(); });
+        document.getElementById("cardBgPicker").addEventListener("input", (e) => { customColors.cardBg = e.target.value; saveAll(); renderPreview(); });
+        document.getElementById("eventBgPicker").addEventListener("input", (e) => { customColors.eventBg = e.target.value; saveAll(); renderPreview(); });
+        document.getElementById("borderColorPicker").addEventListener("input", (e) => { customColors.border = e.target.value; saveAll(); renderPreview(); });
+        document.getElementById("resetColorsBtn").addEventListener("click", () => { applyDefaultColors(); syncAll(); });
+        document.getElementById("darkPreviewBtn").addEventListener("click", () => { darkModePreview = true; saveAll(); renderPreview(); });
+        document.getElementById("lightPreviewBtn").addEventListener("click", () => { darkModePreview = false; saveAll(); renderPreview(); });
+        document.getElementById("addEraBtn").addEventListener("click", () => { timelineData.push({ id: genId(), year: "새 시대", open: true, events: [] }); syncAll(); });
+        document.getElementById("exportHtmlBtn").addEventListener("click", () => { const blob = new Blob([exportHtml()], {type:"text/html"}); const a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download="timeline.html"; a.click(); URL.revokeObjectURL(blob); });
+        document.getElementById("copyHtmlBtn").addEventListener("click", async () => { await navigator.clipboard.writeText(exportHtml()); alert("복사 완료"); });
+        document.getElementById("saveJsonBtn").addEventListener("click", () => { const blob = new Blob([JSON.stringify(timelineData,null,2)], {type:"application/json"}); const a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download="timeline.json"; a.click(); URL.revokeObjectURL(blob); });
+        document.getElementById("importJsonFile").addEventListener("change", (e) => { if(e.target.files[0]) { const reader = new FileReader(); reader.onload = (ev) => { try { const d=JSON.parse(ev.target.result); if(Array.isArray(d)) timelineData=d; syncAll(); } catch(err){alert("JSON 파싱 오류");} }; reader.readAsText(e.target.files[0]); } e.target.value=""; });
+        document.getElementById("resetDemoBtn").addEventListener("click", () => { timelineData = defaultData(); syncAll(); });
+        document.getElementById("importHtmlBtn").addEventListener("click", () => { showHtmlImportModal(); });
+        
+        const fontTypeSelect = document.getElementById("fontTypeSelect");
+        const customFontName = document.getElementById("customFontName");
+        const customFontUrl = document.getElementById("customFontUrl");
+        const loadExample = document.getElementById("loadExampleFont");
+        
+        fontTypeSelect.addEventListener("change", (e) => {
+            fontSettings.type = e.target.value;
+            syncFontUI();
+            saveAll();
+            renderPreview();
+        });
+        customFontName.addEventListener("input", (e) => {
+            fontSettings.customName = e.target.value;
+            saveAll();
+            renderPreview();
+        });
+        customFontUrl.addEventListener("input", (e) => {
+            fontSettings.customUrl = e.target.value;
+            saveAll();
+            renderPreview();
+        });
+        loadExample.addEventListener("click", () => {
+            fontSettings.type = "custom";
+            fontSettings.customName = "Mabiyet";
+            fontSettings.customUrl = "https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_2207-01@1.0/MabinogiClassicR.woff2";
+            syncFontUI();
+            saveAll();
+            renderPreview();
+            fontTypeSelect.value = "custom";
+            document.getElementById("customFontPanel").style.display = "flex";
+        });
+        syncFontUI();
+    };
+</script>
+</body>
+</html>
